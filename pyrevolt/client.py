@@ -10,14 +10,14 @@ class Method(Enum):
     PATCH = "PATCH"
 
 class Request:
-    API_BASE_URL = "https://api.revolt.chat"
+    API_BASE_URL: str = "https://api.revolt.chat"
     
     def __init__(self, method: Method, url: str, *args, **kwargs) -> None:
-        self.method = method
-        self.url = f"{self.API_BASE_URL}{url}"
-        self.data = kwargs.get("data", dict())
-        self.headers = kwargs.get("headers", dict())
-        self.params = kwargs.get("params", dict())
+        self.method: Method = method
+        self.url: str = f"{self.API_BASE_URL}{url}"
+        self.data: dict = kwargs.get("data", dict())
+        self.headers: dict = kwargs.get("headers", dict())
+        self.params: dict = kwargs.get("params", dict())
         if kwargs.get("auth") is not None:
             self.AddAuthentication(kwargs.get("auth"))
 
@@ -29,19 +29,20 @@ class Request:
 
 class HTTPClient:
     def __init__(self) -> None:
-        self.client = ClientSession()
+        self.client: ClientSession = ClientSession()
 
-    async def close(self) -> None:
+    async def Close(self) -> None:
         await self.client.close()
 
-    async def request(self, request: Request) -> dict:
+    async def Request(self, request: Request) -> dict:
         if not self.client.closed:
             async with self.client.request(
-            method = request.method.value,
-            url = request.url,
-            data = request.data,
-            headers = request.headers,
-            params = request.params) as result:
+                method = request.method.value,
+                url = request.url,
+                data = request.data,
+                headers = request.headers,
+                params = request.params
+            ) as result:
                 # TODO: Add status code check
                 return await result.json()
         else:
