@@ -1,5 +1,6 @@
 from __future__ import annotations
 from enum import Enum
+from .events import *
 from threading import Thread, Event
 import asyncio
 from .client import HTTPClient, Request, Method
@@ -7,38 +8,35 @@ from websockets import client
 import json
 from .exceptions import ClosedSocketException
 
-class Authenticate:
-    VALUE = "Authenticate"
-
 class GatewayEvent(Enum):
-    Authenticate = Authenticate
-    BeginTyping = "BeginTyping"
-    EndTyping = "EndTyping"
-    Ping = "Ping"
-    Error = "Error"
-    Authenticated = "Authenticated"
-    Pong = "Pong"
-    Ready = "Ready"
-    Message = "Message"
-    MessageUpdate = "MessageUpdate"
-    MessageDelete = "MessageDelete"
-    ChannelCreate = "ChannelCreate"
-    ChannelUpdate = "ChannelUpdate"
-    ChannelDelete = "ChannelDelete"
-    ChannelGroupJoin = "ChannelGroupJoin"
-    ChannelGroupLeave = "ChannelGroupLeave"
-    ChannelStartTyping = "ChannelStartTyping"
-    ChannelStopTyping = "ChannelStopTyping"
-    ChannelAck = "ChannelAck"
-    ServerUpdate = "ServerUpdate"
-    ServerDelete = "ServerDelete"
-    ServerMemberUpdate = "ServerMemberUpdate"
-    ServerMemberJoin = "ServerMemberJoin"
-    ServerMemberLeave = "ServerMemberLeave"
-    ServerRoleUpdate = "ServerRoleUpdate"
-    ServerRoleDelete = "ServerRoleDelete"
-    UserUpdate = "UserUpdate"
-    UserRelationship = "UserRelationship"
+    Authenticate = Authenticate()
+    BeginTyping = BeginTyping()
+    EndTyping = EndTyping()
+    Ping = Ping()
+    Error = Error()
+    Authenticated = Authenticated()
+    Pong = Pong()
+    Ready = Ready()
+    Message = Message()
+    MessageUpdate = MessageUpdate()
+    MessageDelete = MessageDelete()
+    ChannelCreate = ChannelCreate()
+    ChannelUpdate = ChannelUpdate()
+    ChannelDelete = ChannelDelete()
+    ChannelGroupJoin = ChannelGroupJoin()
+    ChannelGroupLeave = ChannelGroupLeave()
+    ChannelStartTyping = ChannelStartTyping()
+    ChannelStopTyping = ChannelStopTyping()
+    ChannelAck = ChannelAck()
+    ServerUpdate = ServerUpdate()
+    ServerDelete = ServerDelete()
+    ServerMemberUpdate = ServerMemberUpdate()
+    ServerMemberJoin = ServerMemberJoin()
+    ServerMemberLeave = ServerMemberLeave()
+    ServerRoleUpdate = ServerRoleUpdate()
+    ServerRoleDelete = ServerRoleDelete()
+    UserUpdate = UserUpdate()
+    UserRelationship = UserRelationship()
 
 class GatewayKeepAlive(Thread):
     def __init__(self, *args, gateway: Gateway, interval: float, **kwargs) -> None:
@@ -57,7 +55,7 @@ class GatewayKeepAlive(Thread):
 
     def GetPayload(self) -> dict[str]:
         return {
-            "type": GatewayEvent.Ping.value,
+            "type": GatewayEvent.Ping.value.VALUE,
             "data": 0
         }
 
@@ -92,12 +90,12 @@ class Gateway:
 
     async def Receive(self) -> dict:
         if self.websocket.open:
-            data: str = await self.websocket.recv()
-            # match data["type"]:
-            #     case GatewayEvent.Ready.value:
-
-            # TODO: Dispatch events
-            return json.loads(data)
+            data: str = json.loads(await self.websocket.recv())
+            for event in GatewayEvent:
+                if data["type"] == event.value.VALUE:
+                    await event.value.dispatch()
+                    break
+            return data
         raise ClosedSocketException()
 
     async def Authenticate(self, token: str) -> None:
