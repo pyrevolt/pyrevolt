@@ -7,8 +7,11 @@ from websockets import client
 import json
 from .exceptions import ClosedSocketException
 
+class Authenticate:
+    VALUE = "Authenticate"
+
 class GatewayEvent(Enum):
-    Authenticate = "Authenticate"
+    Authenticate = Authenticate
     BeginTyping = "BeginTyping"
     EndTyping = "EndTyping"
     Ping = "Ping"
@@ -49,7 +52,7 @@ class GatewayKeepAlive(Thread):
         while not self.stopEvent.wait(self.interval):
             data: dict = self.GetPayload()
             coro = self.gateway.Send(data)
-            func = asyncio.run_coroutine_threadsafe(coro)
+            func = asyncio.run_coroutine_threadsafe(coro, self.gateway.loop)
             func.result(10)
 
     def GetPayload(self) -> dict[str]:
@@ -61,6 +64,7 @@ class GatewayKeepAlive(Thread):
 class Gateway:
     def __init__(self) -> None:
         self.client: HTTPClient = HTTPClient()
+        self.loop = asyncio.get_event_loop()
         self.keepAlive: GatewayKeepAlive = GatewayKeepAlive(gateway=self, interval=20)
         self.websocket: client.WebSocketClientProtocol | None = client.WebSocketClientProtocol()
 
@@ -89,6 +93,16 @@ class Gateway:
     async def Receive(self) -> dict:
         if self.websocket.open:
             data: str = await self.websocket.recv()
+            # match data["type"]:
+            #     case GatewayEvent.Ready.value:
+
+            # TODO: Dispatch events
             return json.loads(data)
         else:
             raise ClosedSocketException()
+
+    async def Authenticate(self, token: str) -> None:
+        await self.Send({
+            "type": GatewayEvent.Authenticate.value.VALUE,
+            "token": token
+        })
