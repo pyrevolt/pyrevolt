@@ -83,6 +83,10 @@ class Gateway:
             self.keepAlive.start()
 
     async def Send(self, data: dict) -> None:
+        for event in GatewayEvent:
+            if data["type"] == event.value:
+                data["type"] = event.value.VALUE
+                break
         if self.websocket.open:
             await self.websocket.send(json.dumps(data))
         else:
@@ -93,8 +97,9 @@ class Gateway:
             data: str = json.loads(await self.websocket.recv())
             for event in GatewayEvent:
                 if data["type"] == event.value.VALUE:
-                    await event.value.dispatch()
+                    data["type"] = event.value
                     break
+            await data["type"].dispatch()
             return data
         raise ClosedSocketException()
 
