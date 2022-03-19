@@ -98,8 +98,7 @@ class Gateway:
 
             # TODO: Dispatch events
             return json.loads(data)
-        else:
-            raise ClosedSocketException()
+        raise ClosedSocketException()
 
     async def Authenticate(self, token: str) -> None:
         await self.Send({
