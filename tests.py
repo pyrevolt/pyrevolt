@@ -43,22 +43,22 @@ class GatewayTests(unittest.IsolatedAsyncioTestCase):
     async def test_gateway_connect(self) -> None:
         await self.gateway.Connect()
         await self.gateway.Send({
-            "type": pyvolt.GatewayEvent.Ping.value,
+            "type": pyvolt.GatewayEvent.Ping.value.VALUE,
             "data": 0
         })
         self.assertEqual({
-            "type": pyvolt.GatewayEvent.Pong.value,
+            "type": pyvolt.GatewayEvent.Pong.value.VALUE,
             "data": 0
         }, await self.gateway.Receive())
 
     async def test_gateway_keep_alive(self) -> None:
         expectedPongResult: dict = {
-            "type": pyvolt.GatewayEvent.Pong.value,
+            "type": pyvolt.GatewayEvent.Pong.value.VALUE,
             "data": 0
         }
         await self.gateway.Connect()
         await self.gateway.Send({
-            "type": pyvolt.GatewayEvent.Ping.value,
+            "type": pyvolt.GatewayEvent.Ping.value.VALUE,
             "data": 0
         })
         self.assertEqual(expectedPongResult, await self.gateway.Receive())
@@ -67,7 +67,7 @@ class GatewayTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_gateway_identify(self) -> None:
         expectedAuthenticatedResult = {
-            "type": pyvolt.GatewayEvent.Authenticated.value
+            "type": pyvolt.GatewayEvent.Authenticated.value.VALUE
         }
         await self.gateway.Connect()
         await self.gateway.Authenticate(os.getenv("token"))

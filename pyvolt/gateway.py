@@ -95,11 +95,6 @@ class Gateway:
     async def Receive(self) -> dict:
         if self.websocket.open:
             data: str = json.loads(await self.websocket.recv())
-            for event in GatewayEvent:
-                if data["type"] == event.value.VALUE:
-                    data["type"] = event.value
-                    break
-            await data["type"].dispatch()
             return data
         raise ClosedSocketException()
 
