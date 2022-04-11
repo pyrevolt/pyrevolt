@@ -1,7 +1,6 @@
 from __future__ import annotations
 from enum import Enum
 import json
-from typing import dict
 from .user import User
 
 class ChannelType(Enum):
