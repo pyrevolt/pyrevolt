@@ -4,3 +4,4 @@ from .events import *
 from .session import Session
 from .exceptions import ClosedSocketException
 from .structs.user import User
+from .structs.channels import Channel, SavedMessages, DirectMessage, Group, TextChannel, VoiceChannel
