@@ -66,12 +66,31 @@ class GatewayTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(expectedPongResult, result)
 
     async def test_gateway_identify(self) -> None:
-        expectedAuthenticatedResult = {
+        expectedAuthenticatedResult: dict = {
             "type": pyvolt.GatewayEvent.Authenticated.value.VALUE
         }
         await self.gateway.Connect()
         await self.gateway.Authenticate(os.getenv("token"))
         self.assertEqual(expectedAuthenticatedResult, await self.gateway.Receive())
+
+class SessionTests(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self) -> None:
+        self.session: pyvolt.Session = pyvolt.Session()
+        await self.session.Start(os.getenv("token"))
+        return await super().asyncSetUp()
+
+    async def asyncTearDown(self) -> None:
+        await self.session.Close()
+        return await super().asyncTearDown()
+
+    async def test_session(self) -> None:
+        await self.session.GatewayReceive()
+        result: dict = await self.session.GatewayReceive()
+        self.assertEqual(result["type"], pyvolt.GatewayEvent.Ready.value)
+        for user in result["users"]:
+            self.assertIsInstance(user, pyvolt.User)
+        for channel in result["channels"]:
+            self.assertIsInstance(channel, pyvolt.Channel)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

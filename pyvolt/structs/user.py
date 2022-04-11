@@ -21,7 +21,7 @@ class Presence(Enum):
 class Status:
     def __init__(self, presence: Presence, **kwargs) -> None:
         self.presence: Presence = presence
-        self.text = kwargs.get("text")
+        self.text: str|None = kwargs.get("text")
 
     @staticmethod
     async def FromJSON(jsonData: str|bytes) -> Status:
@@ -33,14 +33,14 @@ class Status:
 
 class Bot:
     def __init__(self, ownerID: str) -> None:
-        self.ownerID = ownerID
+        self.ownerID: str = ownerID
     
     def __repr__(self) -> str:
         return f"<pyvolt.Bot owner={self.ownerID}>"
 
 class User:
-    def __init__(self, id: str, username: str, **kwargs) -> None:
-        self.id: str = id
+    def __init__(self, userID: str, username: str, **kwargs) -> None:
+        self.userID: str = userID
         self.username: str = username
         self.badges: int|None = kwargs.get("badges")
         self.online: bool|None = kwargs.get("online")
@@ -50,7 +50,18 @@ class User:
         self.bot: Bot|None = kwargs.get("bot")
 
     def __repr__(self) -> str:
-        return f"<pyvolt.User id={self.id} username={self.username} badges={self.badges} relationship={self.relationship} online={self.online} bot={self.bot}>"
+        return f"<pyvolt.User id={self.userID} username={self.username} badges={self.badges} relationship={self.relationship} online={self.online} bot={self.bot}>"
+
+    async def Update(self, updateData: dict) -> None:
+        self.username = updateData.get("username", self.username)
+        self.badges = updateData.get("badges", self.badges)
+        self.online = updateData.get("online", self.online)
+        if updateData.get("relationship") is not None:
+            self.relationship = Relationship(updateData.get("relationship"))
+        if updateData.get("status") is not None:
+            self.status = await Status.FromJSON(json.dumps(updateData.get("status")))
+        self.flags = updateData.get("flags", self.flags)
+        self.bot = updateData.get("bot", self.bot)
 
     @staticmethod
     async def FromJSON(jsonData: str|bytes) -> User:
@@ -69,9 +80,9 @@ class User:
         return User(data["_id"], data["username"], **kwargs)
 
     @staticmethod
-    async def FromID(id: str, token: str) -> User:
+    async def FromID(userID: str, token: str) -> User:
         client: HTTPClient = HTTPClient()
-        request: Request = Request(Method.GET, "/users/" + id)
+        request: Request = Request(Method.GET, "/users/" + userID)
         request.AddAuthentication(token)
         result: dict = await client.Request(request)
         await client.Close()
