@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any
 from aiohttp import ClientSession
 from .exceptions import ClosedSocketException
 
@@ -15,9 +16,9 @@ class Request:
     def __init__(self, method: Method, url: str, *args, **kwargs) -> None:
         self.method: Method = method
         self.url: str = f"{self.API_BASE_URL}{url}"
-        self.data: dict = kwargs.get("data", dict())
-        self.headers: dict = kwargs.get("headers", dict())
-        self.params: dict = kwargs.get("params", dict())
+        self.data: dict[str, Any] = kwargs.get("data", dict())
+        self.headers: dict[str, str] = kwargs.get("headers", dict())
+        self.params: dict[str, Any] = kwargs.get("params", dict())
         if kwargs.get("auth") is not None:
             self.AddAuthentication(kwargs.get("auth"))
 
