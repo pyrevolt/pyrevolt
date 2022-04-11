@@ -1,7 +1,7 @@
 from __future__ import annotations
 from enum import Enum
 import json
-from typing import List
+from typing import dict
 from .user import User
 
 class ChannelType(Enum):
@@ -32,7 +32,7 @@ class Channel:
             case ChannelType.DirectMessage.value:
                 if data.get("last_message_id") is not None:
                     kwargs["lastMessageID"] = data["last_message_id"]
-                recipients: List[User] = []
+                recipients: dict[User] = []
                 for userID in data["recipients"]:
                     user: User|None = session.users.get(userID)
                     if user is None:
@@ -48,7 +48,7 @@ class Channel:
                     kwargs["permissions"] = data["permissions"]
                 if data.get("nsfw") is not None:
                     kwargs["nsfw"] = data["nsfw"]
-                recipients: List[User] = []
+                recipients: dict[User] = []
                 owner: User = None
                 for userID in data["recipients"]:
                     user: User|None = session.users.get(userID)
@@ -83,16 +83,16 @@ class SavedMessages(Channel):
         super().__init__(channelID, ChannelType.SavedMessages)
 
 class DirectMessage(Channel):
-    def __init__(self, channelID: str, active: bool, recipients: List[User], **kwargs) -> None:
+    def __init__(self, channelID: str, active: bool, recipients: dict[User], **kwargs) -> None:
         self.active: bool = active
-        self.recipients: List[User] = recipients
+        self.recipients: dict[User] = recipients
         self.lastMessageID: str|None = kwargs.get("lastMessageID")
         super().__init__(channelID, ChannelType.DirectMessage)
 
 class Group(Channel):
-    def __init__(self, channelID: str, name: str, recipients: List[User], owner: User, **kwargs) -> None:
+    def __init__(self, channelID: str, name: str, recipients: dict[User], owner: User, **kwargs) -> None:
         self.name: str = name
-        self.recipients: List[User] = recipients
+        self.recipients: dict[User] = recipients
         self.owner: User = owner
         self.description: str|None = kwargs.get("description")
         self.lastMessageID: str|None = kwargs.get("lastMessageID")

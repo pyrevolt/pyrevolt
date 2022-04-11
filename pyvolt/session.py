@@ -1,5 +1,4 @@
 import json
-from typing import List
 from .client import HTTPClient
 from .gateway import Gateway, GatewayEvent
 from .structs.channels import Channel

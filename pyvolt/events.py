@@ -1,5 +1,3 @@
-from typing import List
-
 class Authenticate:
     VALUE = "Authenticate"
 
@@ -13,7 +11,7 @@ class Ping:
     VALUE = "Ping"
 
 class Event:
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
     def __call__(self, *args, **kwargs) -> None:
         self.insertListener(args[0])
@@ -27,96 +25,96 @@ class Event:
 
 class Error(Event):
     VALUE = "Error"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class Authenticated(Event):
     VALUE = "Authenticated"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class Pong(Event):
     VALUE = "Pong"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class Ready(Event):
     VALUE = "Ready"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class Message(Event):
     VALUE = "Message"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class MessageUpdate(Event):
     VALUE = "MessageUpdate"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class MessageDelete(Event):
     VALUE = "MessageDelete"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ChannelCreate(Event):
     VALUE = "ChannelCreate"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ChannelUpdate(Event):
     VALUE = "ChannelUpdate"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ChannelDelete(Event):
     VALUE = "ChannelDelete"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ChannelGroupJoin(Event):
     VALUE = "ChannelGroupJoin"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ChannelGroupLeave(Event):
     VALUE = "ChannelGroupLeave"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ChannelStartTyping(Event):
     VALUE = "ChannelStartTyping"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ChannelStopTyping(Event):
     VALUE = "ChannelStopTyping"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ChannelAck(Event):
     VALUE = "ChannelAck"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ServerUpdate(Event):
     VALUE = "ServerUpdate"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ServerDelete(Event):
     VALUE = "ServerDelete"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ServerMemberUpdate(Event):
     VALUE = "ServerMemberUpdate"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ServerMemberJoin(Event):
     VALUE = "ServerMemberJoin"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ServerMemberLeave(Event):
     VALUE = "ServerMemberLeave"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ServerRoleUpdate(Event):
     VALUE = "ServerRoleUpdate"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class ServerRoleDelete(Event):
     VALUE = "ServerRoleDelete"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class UserUpdate(Event):
     VALUE = "UserUpdate"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
 
 class UserRelationship(Event):
     VALUE = "UserRelationship"
-    LISTENERS: List[callable] = []
+    LISTENERS: dict[callable] = []
