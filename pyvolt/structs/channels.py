@@ -2,6 +2,7 @@ from __future__ import annotations
 from enum import Enum
 import json
 from .user import User
+from ..client import HTTPClient, Request, Method
 
 class ChannelType(Enum):
     SavedMessages = "SavedMessages"
@@ -22,12 +23,13 @@ class Channel:
     async def FromJSON(jsonData: str|bytes, session) -> Channel:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
+        channel: Channel = None
         match data["channel_type"]:
             case ChannelType.SavedMessages.value:
                 user: User|None = session.users.get(data["user"])
                 if user is None:
                     user = await User.FromID(data["user"], session.token)
-                return SavedMessages(data["_id"], user)
+                channel = SavedMessages(data["_id"], user)
             case ChannelType.DirectMessage.value:
                 if data.get("last_message_id") is not None:
                     kwargs["lastMessageID"] = data["last_message_id"]
@@ -37,7 +39,7 @@ class Channel:
                     if user is None:
                         user = await User.FromID(userID, session.token)
                     recipients.append(user)
-                return DirectMessage(data["_id"], data["active"], recipients, **kwargs)
+                channel = DirectMessage(data["_id"], data["active"], recipients, **kwargs)
             case ChannelType.Group.value:
                 if data.get("description") is not None:
                     kwargs["description"] = data["description"]
@@ -56,7 +58,7 @@ class Channel:
                     if user.userID == data["owner"]:
                         owner = user
                     recipients.append(user)
-                return Group(data["_id"], data["name"], recipients, owner, **kwargs)
+                channel = Group(data["_id"], data["name"], recipients, owner, **kwargs)
             case ChannelType.TextChannel.value:
                 if data.get("description") is not None:
                     kwargs["description"] = data["description"]
@@ -66,7 +68,7 @@ class Channel:
                     kwargs["nsfw"] = data["nsfw"]
                 if data.get("last_message_id") is not None:
                     kwargs["lastMessageID"] = data["last_message_id"]
-                return TextChannel(data["_id"], data["server"], data["name"], **kwargs)
+                channel = TextChannel(data["_id"], data["server"], data["name"], **kwargs)
             case ChannelType.VoiceChannel.value:
                 if data.get("description") is not None:
                     kwargs["description"] = data["description"]
@@ -74,7 +76,22 @@ class Channel:
                     kwargs["defaultPermissions"] = data["defaultPermissions"]
                 if data.get("nsfw") is not None:
                     kwargs["nsfw"] = data["nsfw"]
-                return VoiceChannel(data["_id"], data["server"], data["name"], **kwargs)
+                channel = VoiceChannel(data["_id"], data["server"], data["name"], **kwargs)
+        session.channels[channel.channelID] = channel
+        return channel
+
+    @staticmethod
+    async def FromID(channelID: str, session) -> Channel:
+        if session.channels.get(channelID) is not None:
+            return session.channels[channelID]
+        client: HTTPClient = HTTPClient()
+        request: Request = Request(Method.GET, "/channels/" + channelID)
+        request.AddAuthentication(session.token)
+        result: dict = await client.Request(request)
+        await client.Close()
+        if result.get("type") is not None:
+            return
+        return await Channel.FromJSON(json.dumps(result), session)
 
 class SavedMessages(Channel):
     def __init__(self, channelID: str, user: User) -> None:

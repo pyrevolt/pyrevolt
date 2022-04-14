@@ -23,6 +23,9 @@ class Status:
         self.presence: Presence = presence
         self.text: str|None = kwargs.get("text")
 
+    def __repr__(self) -> str:
+        return f"<pyvolt.Status presence={self.presence.value} text={self.text}>"
+
     @staticmethod
     async def FromJSON(jsonData: str|bytes) -> Status:
         data: dict = json.loads(jsonData)
@@ -64,7 +67,7 @@ class User:
         self.bot = updateData.get("bot", self.bot)
 
     @staticmethod
-    async def FromJSON(jsonData: str|bytes) -> User:
+    async def FromJSON(jsonData: str|bytes, session) -> User:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
         if data.get("badges") is not None:
@@ -77,13 +80,18 @@ class User:
             kwargs["status"] = await Status.FromJSON(json.dumps(data["status"]))
         if data.get("bot") is not None:
             kwargs["bot"] = Bot(data["bot"]["owner"])
-        return User(data["_id"], data["username"], **kwargs)
+        user: User = User(data["_id"], data["username"], **kwargs)
+        session.users[user.userID] = user
+        return user
+        
 
     @staticmethod
-    async def FromID(userID: str, token: str) -> User:
+    async def FromID(userID: str, session) -> User:
+        if session.users.get(userID) is not None:
+            return session.users[userID]
         client: HTTPClient = HTTPClient()
         request: Request = Request(Method.GET, "/users/" + userID)
-        request.AddAuthentication(token)
+        request.AddAuthentication(session.token)
         result: dict = await client.Request(request)
         await client.Close()
-        return await User.FromJSON(json.dumps(result))
+        return await User.FromJSON(json.dumps(result), session)
