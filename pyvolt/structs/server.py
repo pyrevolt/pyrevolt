@@ -17,7 +17,9 @@ class Category:
         data: dict = json.loads(jsonData)
         channels: dict[ServerChannel] = []
         for channel in data["channels"]:
-            channels.append(await ServerChannel.FromID(channel, session))
+            channel: ServerChannel|None = await ServerChannel.FromID(channel, session)
+            if channel is not None:
+                channels.append(channel)
             
         return Category(data["id"], data["title"], channels)
 
