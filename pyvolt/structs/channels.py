@@ -12,9 +12,10 @@ class ChannelType(Enum):
     VoiceChannel = "VoiceChannel"
 
 class Channel:
-    def __init__(self, channelID: str, type: ChannelType) -> None:
+    def __init__(self, channelID: str, type: ChannelType, **kwargs) -> None:
         self.channelID: str = channelID
         self.type: ChannelType = type
+        self.session = kwargs.get("session")
 
     def __repr__(self) -> str:
         return f"<pyvolt.{self.type.value} id={self.channelID}>"
@@ -23,6 +24,7 @@ class Channel:
     async def FromJSON(jsonData: str|bytes, session) -> Channel:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
+        kwargs["session"] = session
         channel: Channel = None
         match data["channel_type"]:
             case ChannelType.SavedMessages.value:
@@ -93,17 +95,24 @@ class Channel:
             return
         return await Channel.FromJSON(json.dumps(result), session)
 
+    async def Send(self, content: str) -> None:
+        client: HTTPClient = HTTPClient()
+        request: Request = Request(Method.POST, f"/channels/{self.channelID}/messages", data = {"content": content})
+        request.AddAuthentication(self.session.token)
+        await client.Request(request)
+        await client.Close()
+
 class SavedMessages(Channel):
-    def __init__(self, channelID: str, user: User) -> None:
+    def __init__(self, channelID: str, user: User, **kwargs) -> None:
         self.user: User = user
-        super().__init__(channelID, ChannelType.SavedMessages)
+        super().__init__(channelID, ChannelType.SavedMessages, **kwargs)
 
 class DirectMessage(Channel):
     def __init__(self, channelID: str, active: bool, recipients: dict[User], **kwargs) -> None:
         self.active: bool = active
         self.recipients: dict[User] = recipients
         self.lastMessageID: str|None = kwargs.get("lastMessageID")
-        super().__init__(channelID, ChannelType.DirectMessage)
+        super().__init__(channelID, ChannelType.DirectMessage, **kwargs)
 
 class Group(Channel):
     def __init__(self, channelID: str, name: str, recipients: dict[User], owner: User, **kwargs) -> None:
@@ -115,7 +124,7 @@ class Group(Channel):
         # TODO: Icon
         self.permissions: int|None = kwargs.get("permissions")
         self.nsfw: bool|None = kwargs.get("nsfw")
-        super().__init__(channelID, ChannelType.Group)
+        super().__init__(channelID, ChannelType.Group, **kwargs)
 
 class ServerChannel(Channel):
     def __init__(self, channelID: str, type: ChannelType, server, name: str, **kwargs) -> None:
@@ -126,7 +135,7 @@ class ServerChannel(Channel):
         self.defaultPermissions: int | None = kwargs.get("defaultPermissions")
         # TODO: Role permissions
         self.nsfw: bool | None = kwargs.get("nsfw")
-        super().__init__(channelID, type)
+        super().__init__(channelID, type, **kwargs)
 
 class TextChannel(ServerChannel):
     def __init__(self, channelID: str, server, name: str, **kwargs) -> None:
