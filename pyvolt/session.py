@@ -32,6 +32,10 @@ class Session:
             if data["type"] == event.value.VALUE:
                 data["type"] = event.value
                 break
+
+        args: dict = []
+        kwargs: dict = {}
+
         match data["type"]:
             case GatewayEvent.Ready.value:
                 for index, user in enumerate(data["users"]):
@@ -46,10 +50,18 @@ class Session:
                     server: Server = await Server.FromJSON(json.dumps(server), self)
                     data["servers"][index] = server
                     self.servers[server.serverID] = server
+                kwargs["users"] = data["users"]
+                kwargs["channels"] = data["channels"]
+                kwargs["servers"] = data["servers"]
             case GatewayEvent.UserUpdate.value:
                 user: User | None = self.users.get(data["id"])
                 if user is not None:
                     await user.Update(data["data"])
+                    args.append(user)
+            case GatewayEvent.Message.value:
+                kwargs["channel"] = await Channel.FromID(data["channel"], self)
+                kwargs["author"] = await User.FromID(data["author"], self)
+                kwargs["content"] = data["content"]
                     
-        await data["type"].dispatch()
+        await data["type"].dispatch(*args, **kwargs)
         return data
