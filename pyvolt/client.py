@@ -1,4 +1,5 @@
 from enum import Enum
+import json
 from typing import Any
 from aiohttp import ClientSession
 from .exceptions import ClosedSocketException
@@ -40,7 +41,7 @@ class HTTPClient:
             async with self.client.request(
                 method = request.method.value,
                 url = request.url,
-                data = request.data,
+                data = json.dumps(request.data),
                 headers = request.headers,
                 params = request.params
             ) as result:
