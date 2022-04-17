@@ -1,5 +1,11 @@
-# pyvolt
-A Python library to wrap the Revolt API, made to be easy-to-use but powerful and feature rich
+<h1 style="text-align: center; font-size: 48px; margin-bottom: 0px;">pyvolt</h1>
+<div style="text-align: center; margin-bottom: 10px;">
+A Python library to wrap the Revolt API, made to be easy-to-use but powerful and feature rich.
+</div>
+<div style="text-align: center;">
+
+[![Version](https://img.shields.io/badge/version-0.1.0--a-red)](https://img.shields.io/badge/version-0.1.0--a-red) [![Stability](https://img.shields.io/badge/stability-Do%20not%20use-inactive)](https://img.shields.io/badge/stability-Do%20not%20use-inactive)
+</div>
 
 #### Code Quality
 [![CodeFactor](https://www.codefactor.io/repository/github/genericnerd/pyvolt/badge)](https://www.codefactor.io/repository/github/genericnerd/pyvolt)
