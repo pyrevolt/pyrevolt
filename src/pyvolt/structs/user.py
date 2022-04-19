@@ -37,7 +37,7 @@ class Status:
             kwargs["text"] = data["text"]
         return Status(Presence(data["presence"]), **kwargs)
 
-class Bot:
+class BotUser:
     def __init__(self, ownerID: str) -> None:
         self.ownerID: str = ownerID
     
@@ -53,7 +53,7 @@ class User:
         self.relationship: Relationship|None = kwargs.get("relationship")
         self.status: dict|None = kwargs.get("status")
         self.flags: int|None = kwargs.get("flags")
-        self.bot: Bot|None = kwargs.get("bot")
+        self.bot: BotUser|None = kwargs.get("bot")
 
     def __repr__(self) -> str:
         return f"<pyvolt.User id={self.userID} username={self.username} badges={self.badges} relationship={self.relationship} online={self.online} bot={self.bot}>"
@@ -82,7 +82,7 @@ class User:
         if data.get("status") is not None:
             kwargs["status"] = await Status.FromJSON(json.dumps(data["status"]))
         if data.get("bot") is not None:
-            kwargs["bot"] = Bot(data["bot"]["owner"])
+            kwargs["bot"] = BotUser(data["bot"]["owner"])
         user: User = User(data["_id"], data["username"], **kwargs)
         session.users[user.userID] = user
         return user

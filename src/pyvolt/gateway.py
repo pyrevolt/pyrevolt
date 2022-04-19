@@ -17,7 +17,7 @@ class GatewayEvent(Enum):
     Authenticated = Authenticated()
     Pong = Pong()
     Ready = Ready()
-    Message = Message()
+    Message = OnMessage()
     MessageUpdate = MessageUpdate()
     MessageDelete = MessageDelete()
     ChannelCreate = ChannelCreate()

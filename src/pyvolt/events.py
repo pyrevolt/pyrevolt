@@ -39,7 +39,7 @@ class Ready(Event):
     VALUE = "Ready"
     LISTENERS: dict[callable] = []
 
-class Message(Event):
+class OnMessage(Event):
     VALUE = "Message"
     LISTENERS: dict[callable] = []
 
