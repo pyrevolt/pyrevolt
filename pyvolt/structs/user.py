@@ -84,7 +84,6 @@ class User:
         session.users[user.userID] = user
         return user
         
-
     @staticmethod
     async def FromID(userID: str, session) -> User:
         if session.users.get(userID) is not None:
