@@ -1,5 +1,5 @@
 import json
-from .client import HTTPClient
+from .client import HTTPClient, Method, Request
 from .gateway import Gateway, GatewayEvent
 from .structs.channels import Channel
 from .structs.user import User
@@ -26,6 +26,11 @@ class Session:
         await self.gateway.Close()
         await self.client.Close()
     
+    async def Request(self, method: Method, url: str, **kwargs) -> dict:
+        request: Request = Request(method, url, **kwargs)
+        request.AddAuthentication(self.token)
+        return await self.client.Request(request)
+
     async def GatewayReceive(self) -> dict:
         data: dict = await self.gateway.Receive()
         for event in GatewayEvent:
