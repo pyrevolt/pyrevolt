@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json
-from pyvolt.structs.channels import ServerChannel
-from pyvolt.structs.user import User
+from ..structs.channels import ServerChannel
+from ..structs.user import User
 
 class Category:
     def __init__(self, categoryID: str, title: str, channels: dict[ServerChannel]) -> None:

@@ -3,8 +3,8 @@ from enum import Enum
 import json
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from pyvolt.structs.channels import Channel
-    from pyvolt.structs.user import User
+    from ..structs.channels import Channel
+    from ..structs.user import User
 
 class EmbedType(Enum):
     Website = "Website"

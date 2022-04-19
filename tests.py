@@ -1,7 +1,7 @@
 import asyncio
 import unittest
 import os
-import pyvolt
+import src.pyvolt as pyvolt
 
 class HTTPTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
