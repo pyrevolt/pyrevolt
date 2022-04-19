@@ -2,6 +2,9 @@ from __future__ import annotations
 import json
 from ..structs.channels import ServerChannel
 from ..structs.user import User
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..session import Session
 
 class Category:
     def __init__(self, categoryID: str, title: str, channels: dict[ServerChannel]) -> None:
@@ -13,7 +16,7 @@ class Category:
         return f"<pyvolt.Category id={self.categoryID} title={self.title} channels={self.channels}>"
 
     @staticmethod
-    async def FromJSON(jsonData: str|bytes, session) -> Category:
+    async def FromJSON(jsonData: str|bytes, session: Session) -> Category:
         data: dict = json.loads(jsonData)
         channels: dict[ServerChannel] = []
         for channel in data["channels"]:
@@ -34,7 +37,7 @@ class SystemMessages:
         return f"<pyvolt.SystemMessages userJoinedChannel={self.userJoinedChannel} userLeftChannel={self.userLeftChannel} userKickedChannel={self.userKickedChannel} userBannedChannel={self.userBannedChannel}>"
 
     @staticmethod
-    async def FromJSON(jsonData: str|bytes, session) -> SystemMessages:
+    async def FromJSON(jsonData: str|bytes, session: Session) -> SystemMessages:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
         if data.get("userJoinedChannel") is not None:
@@ -60,7 +63,7 @@ class Role:
         return f"<pyvolt.Roles name={self.name} permissions={self.permissions} colour={self.colour} hoist={self.hoist} rank={self.rank}>"
 
     @staticmethod
-    async def FromJSON(jsonData: str|bytes, session) -> Role:
+    async def FromJSON(jsonData: str|bytes, session: Session) -> Role:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
         if data.get("colour") is not None:
@@ -90,7 +93,7 @@ class Server:
         return f"<pyvolt.Server id={self.serverID} owner={self.owner} name={self.name} channels={self.channels} defaultPermissions={self.defaultPermissions} categories={self.categories} systemMessages={self.systemMessages} roles={self.roles} nsfw={self.nsfw} flags={self.flags} analytics={self.analytics} discoverable={self.discoverable}>"
     
     @staticmethod
-    async def FromJSON(jsonData: str|bytes, session) -> Server:
+    async def FromJSON(jsonData: str|bytes, session: Session) -> Server:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
         channels: dict[ServerChannel] = []

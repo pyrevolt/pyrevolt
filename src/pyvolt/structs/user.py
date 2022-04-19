@@ -2,6 +2,9 @@ from __future__ import annotations
 from enum import Enum
 import json
 from ..client import HTTPClient, Request, Method
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..session import Session
 
 class Relationship(Enum):
     Blocked = "Blocked"
@@ -67,7 +70,7 @@ class User:
         self.bot = updateData.get("bot", self.bot)
 
     @staticmethod
-    async def FromJSON(jsonData: str|bytes, session) -> User:
+    async def FromJSON(jsonData: str|bytes, session: Session) -> User:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
         if data.get("badges") is not None:
