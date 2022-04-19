@@ -4,9 +4,36 @@ A Python library to wrap the Revolt API, made to be easy-to-use but powerful and
 </div>
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-0.1.0--a-red)](https://img.shields.io/badge/version-0.1.0--a-red) [![Stability](https://img.shields.io/badge/stability-Do%20not%20use-inactive)](https://img.shields.io/badge/stability-Do%20not%20use-inactive)
+[![Version](https://img.shields.io/badge/version-0.1.1--a-red)](https://img.shields.io/badge/version-0.1.1--a-red) [![Stability](https://img.shields.io/badge/stability-Use%20if%20experienced-important)](https://img.shields.io/badge/stability-Use%20if%20experienced-important)
 </div>
+## Installing pyvolt
+**Python 3.10 or greater is required**
+To install pyvolt, you can run the following command:
+```python
+# Linux/macOS command
+python3 -m pip install pyvolt
+# Windows
+py -m pip install pyvolt
+```
 
+## Using pyvolt
+This shows a very quick example of how to use pyvolt. As a note, pyvolt is still under heavy development and this example and the library as a whole may change.
+```py
+import pyvolt
+
+@pyvolt.OnMessage()
+async def onMessage(channel: pyvolt.Channel, author: pyvolt.User, content: str) -> None:
+    print(f"{author.userID} in {channel.channelID}: {content}")
+    if content == "!ping":
+        await channel.Send(f"Pong! <@{author.userID}>")
+
+bot = pyvolt.Bot()
+bot.run(token="TOKEN")
+```
+
+As the library expands, more examples will be added, but we expect users during the very initial development phases to read through the source in order to find how to develop (this will of course change over the development of the library).
+
+### Useful Information
 #### Code Quality
 [![CodeFactor](https://www.codefactor.io/repository/github/genericnerd/pyvolt/badge)](https://www.codefactor.io/repository/github/genericnerd/pyvolt)
 [![CircleCI](https://circleci.com/gh/GenericNerd/pyvolt.svg?style=shield)](https://app.circleci.com/pipelines/github/GenericNerd/pyvolt)
