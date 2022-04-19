@@ -6,6 +6,7 @@ A Python library to wrap the Revolt API, made to be easy-to-use but powerful and
 
 [![Version](https://img.shields.io/badge/version-0.1.1--a-red)](https://img.shields.io/badge/version-0.1.1--a-red) [![Stability](https://img.shields.io/badge/stability-Use%20if%20experienced-important)](https://img.shields.io/badge/stability-Use%20if%20experienced-important)
 </div>
+
 ## Installing pyrevolt
 **Python 3.10 or greater is required**
 To install pyrevolt, you can run the following command:
