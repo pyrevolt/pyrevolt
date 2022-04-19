@@ -91,6 +91,8 @@ class SessionTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsInstance(user, pyvolt.User)
         for channel in result["channels"]:
             self.assertIsInstance(channel, pyvolt.Channel)
+        for server in result["servers"]:
+            self.assertIsInstance(server, pyvolt.Server)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
