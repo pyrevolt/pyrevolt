@@ -1,11 +1,11 @@
 from __future__ import annotations
 from enum import Enum
 import json
-from ..client import HTTPClient, Request, Method
+from ..client import Method
+from .user import User
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from .user import User
-    from .message import Message
+    from .messaging import Embed, Masquerade
     from ..session import Session
 
 class ChannelType(Enum):
@@ -92,13 +92,8 @@ class Channel:
             return
         return await Channel.FromJSON(json.dumps(result), session)
 
-    async def Send(self, message: str|Message) -> None:
-        msg: Message|None = None
-        if isinstance(message, Message):
-            msg = message
-        else:
-            msg = Message(self, message)
-        await msg.Send()
+    async def Send(self, message: str) -> None:
+        await Message.Send(self, self.session, content=message)
 
 class SavedMessages(Channel):
     def __init__(self, channelID: str, user: User, **kwargs) -> None:
@@ -158,3 +153,36 @@ class VoiceChannel(ServerChannel):
 
     def __repr__(self) -> str:
         return f"<pyvolt.VoiceChannel id={self.channelID} server={self.server} name={self.name}>"
+
+
+class Message:
+    def __init__(self, messageID: str, channel: Channel, author: User, content, **kwargs):
+        self.messageID: int = messageID
+        self.channel: Channel = channel
+        self.author: User = author
+        self.content = content
+        self.nonce: str | None = kwargs.get("nonce")
+        self.edited: str | None = kwargs.get("edited")
+        self.embeds: dict[Embed] | None = kwargs.get("embeds")
+        self.mentions: dict[User] | None = kwargs.get("mentions")
+        self.replies: dict[Message] | None = kwargs.get("replies")
+        self.masquerade: Masquerade | None = kwargs.get("masquerade")
+
+    def __repr__(self) -> str:
+        return f"<pyvolt.Message id={self.messageID} channel={self.channel} author={self.author}>"
+
+    @staticmethod
+    async def FromJSON(jsonData: str | bytes, session: Session) -> Message:
+        data: dict = jsonData
+        kwargs: dict = {}
+        return Message(data["_id"], await Channel.FromID(data["channel"], session), await User.FromID(data["author"], session), data["content"], **kwargs)
+
+    @staticmethod
+    async def Send(channel: Channel, session: Session, **kwargs) -> Message:
+        data: dict = {}
+        data["content"] = kwargs.get("content", "")
+        if kwargs.get("replies") is not None:
+            for reply in kwargs["replies"]:
+                data["replies"].append(
+                    {"id": reply.message.messageID, "mention": reply.mention})
+        await Message.FromJSON(await session.Request(Method.POST, f"/channels/{channel.channelID}/messages", data=data), session)

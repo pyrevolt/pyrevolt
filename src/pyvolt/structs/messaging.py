@@ -2,9 +2,11 @@ from __future__ import annotations
 from enum import Enum
 import json
 from typing import TYPE_CHECKING
+from src.pyvolt.client import Method
 if TYPE_CHECKING:
-    from ..structs.channels import Channel
-    from ..structs.user import User
+    from .channels import Message
+    from .user import User
+    from ..session import Session
 
 class EmbedType(Enum):
     Website = "Website"
@@ -46,21 +48,7 @@ class Masquerade:
         self.name: str|None = kwargs.get("name")
         self.avatar: str|None = kwargs.get("avatar")
 
-class Message:
-    def __init__(self, messageID: int, channel: Channel, author: User, content, **kwargs):
-        self.messageID: int = messageID
-        self.channel: Channel = channel
-        self.author: User = author
-        self.content = content
-        self.nonce: str|None = kwargs.get("nonce")
-        self.edited: str|None = kwargs.get("edited")
-        self.embeds: dict[Embed]|None = kwargs.get("embeds")
-        self.mentions: dict[User]|None = kwargs.get("mentions")
-        self.replies: dict[Message]|None = kwargs.get("replies")
-        self.masquerade: Masquerade|None = kwargs.get("masquerade")
-    
-    def __repr__(self) -> str:
-        return f"<pyvolt.Message id={self.messageID} channel={self.channel} author={self.author}>"
-    
-    # @staticmethod
-    # def Create()
+class Reply:
+    def __init__(self, message: Message, mention: bool):
+        self.message: Message = message
+        self.mention: bool = mention
