@@ -14,7 +14,7 @@ class Method(Enum):
 class Request:
     API_BASE_URL: str = "https://api.revolt.chat"
     
-    def __init__(self, method: Method, url: str, *args, **kwargs) -> None:
+    def __init__(self, method: Method, url: str, **kwargs) -> None:
         self.method: Method = method
         self.url: str = f"{self.API_BASE_URL}{url}"
         self.data: dict[str, Any] = kwargs.get("data", dict())
