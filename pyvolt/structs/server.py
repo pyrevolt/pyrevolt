@@ -10,7 +10,7 @@ class Category:
         self.channels: dict[ServerChannel] = channels
 
     def __repr__(self) -> str:
-        return f"<pyvolt.Category id={self.categoryID}> title={self.title} channels={self.channels}>"
+        return f"<pyvolt.Category id={self.categoryID} title={self.title} channels={self.channels}>"
 
     @staticmethod
     async def FromJSON(jsonData: str|bytes, session) -> Category:
