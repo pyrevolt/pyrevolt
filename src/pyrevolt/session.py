@@ -1,7 +1,7 @@
 import json
 from .client import HTTPClient, Method, Request
 from .gateway import Gateway, GatewayEvent
-from .structs.channels import Channel
+from .structs.channels import Channel, Message
 from .structs.user import User
 from .structs.server import Server
 
@@ -64,9 +64,7 @@ class Session:
                     await user.Update(data["data"])
                     args.append(user)
             case GatewayEvent.Message.value:
-                kwargs["channel"] = await Channel.FromID(data["channel"], self)
-                kwargs["author"] = await User.FromID(data["author"], self)
-                kwargs["content"] = data["content"]
+                kwargs["message"] = await Message.FromJSON(data, self)
                     
         await data["type"].dispatch(*args, **kwargs)
         return data

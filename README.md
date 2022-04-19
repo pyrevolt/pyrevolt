@@ -4,15 +4,16 @@ A Python library to wrap the Revolt API, made to be easy-to-use but powerful and
 </div>
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-0.1.1--a-red)](https://img.shields.io/badge/version-0.1.1--a-red) [![Stability](https://img.shields.io/badge/stability-Use%20if%20experienced-important)](https://img.shields.io/badge/stability-Use%20if%20experienced-important)
+[![Version](https://img.shields.io/badge/version-0.1.3--a-red)](https://img.shields.io/badge/version-0.1.3--a-red) [![Stability](https://img.shields.io/badge/stability-Use%20if%20experienced-important)](https://img.shields.io/badge/stability-Use%20if%20experienced-important)
 </div>
 
 ## Installing pyrevolt
 **Python 3.10 or greater is required**
+
 To install pyrevolt, you can run the following command:
 ```python
 # Linux/macOS command
-python3 -m pip install pyrevolt
+python3 -m pip install py   revolt
 # Windows
 py -m pip install pyrevolt
 ```
@@ -22,11 +23,15 @@ This shows a very quick example of how to use pyrevolt. As a note, pyrevolt is s
 ```py
 import pyrevolt
 
+@pyrevolt.Ready()
+async def onReady(users: dict[pyrevolt.User], channels: dict[pyrevolt.Channel], servers: dict[pyrevolt.Server]) -> None:
+    print("Ready!")
+
 @pyrevolt.OnMessage()
-async def onMessage(channel: pyrevolt.Channel, author: pyrevolt.User, content: str) -> None:
-    print(f"{author.userID} in {channel.channelID}: {content}")
-    if content == "!ping":
-        await channel.Send(f"Pong! <@{author.userID}>")
+async def onMessage(message: pyrevolt.Message) -> None:
+    print(f"{message.author.username} said: {message.content}")
+    if message.content == "!ping":
+        await message.Send(content=f"Pong {message.author.username}!", embeds=[pyrevolt.Embed.Create(title="Pong!", description=f"<@{message.author.userID}>!", colour="#0000ff")])
 
 bot = pyrevolt.Bot()
 bot.run(token="TOKEN")
