@@ -101,7 +101,7 @@ class SavedMessages(Channel):
         super().__init__(channelID, ChannelType.SavedMessages, **kwargs)
 
     def __repr__(self) -> str:
-        return f"<pyvolt.SavedMessage id={self.channelID} user={self.user}>"
+        return f"<pyrevolt.SavedMessage id={self.channelID} user={self.user}>"
 
 class DirectMessage(Channel):
     def __init__(self, channelID: str, active: bool, recipients: dict[User], **kwargs) -> None:
@@ -111,7 +111,7 @@ class DirectMessage(Channel):
         super().__init__(channelID, ChannelType.DirectMessage, **kwargs)
 
     def __repr__(self) -> str:
-        return f"<pyvolt.DirectMessage id={self.channelID} active={self.active} recipients=[{self.recipients}]>"
+        return f"<pyrevolt.DirectMessage id={self.channelID} active={self.active} recipients=[{self.recipients}]>"
 
 class Group(Channel):
     def __init__(self, channelID: str, name: str, recipients: dict[User], owner: User, **kwargs) -> None:
@@ -126,7 +126,7 @@ class Group(Channel):
         super().__init__(channelID, ChannelType.Group, **kwargs)
 
     def __repr__(self) -> str:
-        return f"<pyvolt.Group id={self.channelID} name={self.name} recipients=[{self.recipients}] owner={self.owner}>"
+        return f"<pyrevolt.Group id={self.channelID} name={self.name} recipients=[{self.recipients}] owner={self.owner}>"
 
 class ServerChannel(Channel):
     def __init__(self, channelID: str, type: ChannelType, server, name: str, **kwargs) -> None:
@@ -145,14 +145,14 @@ class TextChannel(ServerChannel):
         super().__init__(channelID, ChannelType.TextChannel, server, name, **kwargs)
 
     def __repr__(self) -> str:
-        return f"<pyvolt.TextChannel id={self.channelID} server={self.server} name={self.name}>"
+        return f"<pyrevolt.TextChannel id={self.channelID} server={self.server} name={self.name}>"
 
 class VoiceChannel(ServerChannel):
     def __init__(self, channelID: str, server, name: str, **kwargs) -> None:
         super().__init__(channelID, ChannelType.VoiceChannel, server, name, **kwargs)
 
     def __repr__(self) -> str:
-        return f"<pyvolt.VoiceChannel id={self.channelID} server={self.server} name={self.name}>"
+        return f"<pyrevolt.VoiceChannel id={self.channelID} server={self.server} name={self.name}>"
 
 
 class Message:
@@ -169,7 +169,7 @@ class Message:
         self.masquerade: Masquerade | None = kwargs.get("masquerade")
 
     def __repr__(self) -> str:
-        return f"<pyvolt.Message id={self.messageID} channel={self.channel} author={self.author}>"
+        return f"<pyrevolt.Message id={self.messageID} channel={self.channel} author={self.author}>"
 
     @staticmethod
     async def FromJSON(jsonData: str | bytes, session: Session) -> Message:

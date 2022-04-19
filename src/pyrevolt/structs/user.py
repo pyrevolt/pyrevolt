@@ -27,7 +27,7 @@ class Status:
         self.text: str|None = kwargs.get("text")
 
     def __repr__(self) -> str:
-        return f"<pyvolt.Status presence={self.presence.value} text={self.text}>"
+        return f"<pyrevolt.Status presence={self.presence.value} text={self.text}>"
 
     @staticmethod
     async def FromJSON(jsonData: str|bytes) -> Status:
@@ -42,7 +42,7 @@ class BotUser:
         self.ownerID: str = ownerID
     
     def __repr__(self) -> str:
-        return f"<pyvolt.Bot owner={self.ownerID}>"
+        return f"<pyrevolt.Bot owner={self.ownerID}>"
 
 class User:
     def __init__(self, userID: str, username: str, **kwargs) -> None:
@@ -56,7 +56,7 @@ class User:
         self.bot: BotUser|None = kwargs.get("bot")
 
     def __repr__(self) -> str:
-        return f"<pyvolt.User id={self.userID} username={self.username} badges={self.badges} relationship={self.relationship} online={self.online} bot={self.bot}>"
+        return f"<pyrevolt.User id={self.userID} username={self.username} badges={self.badges} relationship={self.relationship} online={self.online} bot={self.bot}>"
 
     async def Update(self, updateData: dict) -> None:
         self.username = updateData.get("username", self.username)

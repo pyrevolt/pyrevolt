@@ -13,7 +13,7 @@ class Category:
         self.channels: dict[ServerChannel] = channels
 
     def __repr__(self) -> str:
-        return f"<pyvolt.Category id={self.categoryID} title={self.title} channels={self.channels}>"
+        return f"<pyrevolt.Category id={self.categoryID} title={self.title} channels={self.channels}>"
 
     @staticmethod
     async def FromJSON(jsonData: str|bytes, session: Session) -> Category:
@@ -34,7 +34,7 @@ class SystemMessages:
         self.userBannedChannel: ServerChannel|None = kwargs.get("userBannedChannel")
 
     def __repr__(self) -> str:
-        return f"<pyvolt.SystemMessages userJoinedChannel={self.userJoinedChannel} userLeftChannel={self.userLeftChannel} userKickedChannel={self.userKickedChannel} userBannedChannel={self.userBannedChannel}>"
+        return f"<pyrevolt.SystemMessages userJoinedChannel={self.userJoinedChannel} userLeftChannel={self.userLeftChannel} userKickedChannel={self.userKickedChannel} userBannedChannel={self.userBannedChannel}>"
 
     @staticmethod
     async def FromJSON(jsonData: str|bytes, session: Session) -> SystemMessages:
@@ -60,7 +60,7 @@ class Role:
         self.rank: int|None = kwargs.get("rank")
 
     def __repr__(self) -> str:
-        return f"<pyvolt.Roles name={self.name} permissions={self.permissions} colour={self.colour} hoist={self.hoist} rank={self.rank}>"
+        return f"<pyrevolt.Roles name={self.name} permissions={self.permissions} colour={self.colour} hoist={self.hoist} rank={self.rank}>"
 
     @staticmethod
     async def FromJSON(jsonData: str|bytes, session: Session) -> Role:
@@ -90,7 +90,7 @@ class Server:
         self.discoverable: bool|None = kwargs.get("discoverable")
 
     def __repr__(self) -> str:
-        return f"<pyvolt.Server id={self.serverID} owner={self.owner} name={self.name} channels={self.channels} defaultPermissions={self.defaultPermissions} categories={self.categories} systemMessages={self.systemMessages} roles={self.roles} nsfw={self.nsfw} flags={self.flags} analytics={self.analytics} discoverable={self.discoverable}>"
+        return f"<pyrevolt.Server id={self.serverID} owner={self.owner} name={self.name} channels={self.channels} defaultPermissions={self.defaultPermissions} categories={self.categories} systemMessages={self.systemMessages} roles={self.roles} nsfw={self.nsfw} flags={self.flags} analytics={self.analytics} discoverable={self.discoverable}>"
     
     @staticmethod
     async def FromJSON(jsonData: str|bytes, session: Session) -> Server:

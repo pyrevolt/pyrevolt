@@ -2,7 +2,7 @@ from __future__ import annotations
 from enum import Enum
 import json
 from typing import TYPE_CHECKING
-from src.pyvolt.client import Method
+from src.pyrevolt.client import Method
 if TYPE_CHECKING:
     from .channels import Message
     from .user import User

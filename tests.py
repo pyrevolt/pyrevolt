@@ -1,11 +1,11 @@
 import asyncio
 import unittest
 import os
-from src import pyvolt
+from src import pyrevolt
 
 class HTTPTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        self.client: pyvolt.HTTPClient = pyvolt.HTTPClient()
+        self.client: pyrevolt.HTTPClient = pyrevolt.HTTPClient()
         return await super().asyncSetUp()
 
     async def asyncTearDown(self) -> None:
@@ -13,7 +13,7 @@ class HTTPTests(unittest.IsolatedAsyncioTestCase):
         return await super().asyncTearDown()
 
     async def test_request(self) -> None:
-        request: pyvolt.Request = pyvolt.Request(pyvolt.Method.GET, "/")
+        request: pyrevolt.Request = pyrevolt.Request(pyrevolt.Method.GET, "/")
         
         result: dict = await self.client.Request(request)
         self.assertEqual(result["ws"], "wss://ws.revolt.chat")
@@ -21,7 +21,7 @@ class HTTPTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_fetch_user(self) -> None:
         user: str = "01FYEQ9FTJ62N39TGZ9P7BMCZD"
-        request: pyvolt.Request = pyvolt.Request(pyvolt.Method.GET, "/users/" + user)
+        request: pyrevolt.Request = pyrevolt.Request(pyrevolt.Method.GET, "/users/" + user)
         request.AddAuthentication(os.getenv("token"))
         
         result: dict = await self.client.Request(request)
@@ -29,7 +29,7 @@ class HTTPTests(unittest.IsolatedAsyncioTestCase):
 
 class GatewayTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        self.gateway: pyvolt.Gateway = pyvolt.Gateway()
+        self.gateway: pyrevolt.Gateway = pyrevolt.Gateway()
         return await super().asyncSetUp()
 
     async def asyncTearDown(self) -> None:
@@ -43,22 +43,22 @@ class GatewayTests(unittest.IsolatedAsyncioTestCase):
     async def test_gateway_connect(self) -> None:
         await self.gateway.Connect()
         await self.gateway.Send({
-            "type": pyvolt.GatewayEvent.Ping.value.VALUE,
+            "type": pyrevolt.GatewayEvent.Ping.value.VALUE,
             "data": 0
         })
         self.assertEqual({
-            "type": pyvolt.GatewayEvent.Pong.value.VALUE,
+            "type": pyrevolt.GatewayEvent.Pong.value.VALUE,
             "data": 0
         }, await self.gateway.Receive())
 
     async def test_gateway_keep_alive(self) -> None:
         expectedPongResult: dict = {
-            "type": pyvolt.GatewayEvent.Pong.value.VALUE,
+            "type": pyrevolt.GatewayEvent.Pong.value.VALUE,
             "data": 0
         }
         await self.gateway.Connect()
         await self.gateway.Send({
-            "type": pyvolt.GatewayEvent.Ping.value.VALUE,
+            "type": pyrevolt.GatewayEvent.Ping.value.VALUE,
             "data": 0
         })
         self.assertEqual(expectedPongResult, await self.gateway.Receive())
@@ -67,7 +67,7 @@ class GatewayTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_gateway_identify(self) -> None:
         expectedAuthenticatedResult: dict = {
-            "type": pyvolt.GatewayEvent.Authenticated.value.VALUE
+            "type": pyrevolt.GatewayEvent.Authenticated.value.VALUE
         }
         await self.gateway.Connect()
         await self.gateway.Authenticate(os.getenv("token"))
@@ -75,7 +75,7 @@ class GatewayTests(unittest.IsolatedAsyncioTestCase):
 
 class SessionTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
-        self.session: pyvolt.Session = pyvolt.Session()
+        self.session: pyrevolt.Session = pyrevolt.Session()
         await self.session.Start(os.getenv("token"))
         return await super().asyncSetUp()
 
@@ -86,13 +86,13 @@ class SessionTests(unittest.IsolatedAsyncioTestCase):
     async def test_session(self) -> None:
         await self.session.GatewayReceive()
         result: dict = await self.session.GatewayReceive()
-        self.assertEqual(result["type"], pyvolt.GatewayEvent.Ready.value)
+        self.assertEqual(result["type"], pyrevolt.GatewayEvent.Ready.value)
         for user in result["users"]:
-            self.assertIsInstance(user, pyvolt.User)
+            self.assertIsInstance(user, pyrevolt.User)
         for channel in result["channels"]:
-            self.assertIsInstance(channel, pyvolt.Channel)
+            self.assertIsInstance(channel, pyrevolt.Channel)
         for server in result["servers"]:
-            self.assertIsInstance(server, pyvolt.Server)
+            self.assertIsInstance(server, pyrevolt.Server)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
