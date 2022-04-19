@@ -1,8 +1,12 @@
 from __future__ import annotations
 from enum import Enum
 import json
-from .user import User
 from ..client import HTTPClient, Request, Method
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .user import User
+    from .message import Message
+    from ..session import Session
 
 class ChannelType(Enum):
     SavedMessages = "SavedMessages"
@@ -17,11 +21,8 @@ class Channel:
         self.type: ChannelType = type
         self.session = kwargs.get("session")
 
-    def __repr__(self) -> str:
-        return f"<pyvolt.{self.type.value} id={self.channelID}>"
-
     @staticmethod
-    async def FromJSON(jsonData: str|bytes, session) -> Channel:
+    async def FromJSON(jsonData: str|bytes, session: Session) -> Channel:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
         kwargs["session"] = session
@@ -83,29 +84,29 @@ class Channel:
         return channel
 
     @staticmethod
-    async def FromID(channelID: str, session) -> Channel:
+    async def FromID(channelID: str, session: Session) -> Channel:
         if session.channels.get(channelID) is not None:
             return session.channels[channelID]
-        client: HTTPClient = HTTPClient()
-        request: Request = Request(Method.GET, "/channels/" + channelID)
-        request.AddAuthentication(session.token)
-        result: dict = await client.Request(request)
-        await client.Close()
+        result: dict = await session.Request(Method.GET, f"/channels/{channelID}")
         if result.get("type") is not None:
             return
         return await Channel.FromJSON(json.dumps(result), session)
 
-    async def Send(self, content: str) -> None:
-        client: HTTPClient = HTTPClient()
-        request: Request = Request(Method.POST, f"/channels/{self.channelID}/messages", data = {"content": content})
-        request.AddAuthentication(self.session.token)
-        await client.Request(request)
-        await client.Close()
+    async def Send(self, message: str|Message) -> None:
+        msg: Message|None = None
+        if isinstance(message, Message):
+            msg = message
+        else:
+            msg = Message(self, message)
+        await msg.Send()
 
 class SavedMessages(Channel):
     def __init__(self, channelID: str, user: User, **kwargs) -> None:
         self.user: User = user
         super().__init__(channelID, ChannelType.SavedMessages, **kwargs)
+
+    def __repr__(self) -> str:
+        return f"<pyvolt.SavedMessage id={self.channelID} user={self.user}>"
 
 class DirectMessage(Channel):
     def __init__(self, channelID: str, active: bool, recipients: dict[User], **kwargs) -> None:
@@ -113,6 +114,9 @@ class DirectMessage(Channel):
         self.recipients: dict[User] = recipients
         self.lastMessageID: str|None = kwargs.get("lastMessageID")
         super().__init__(channelID, ChannelType.DirectMessage, **kwargs)
+
+    def __repr__(self) -> str:
+        return f"<pyvolt.DirectMessage id={self.channelID} active={self.active} recipients=[{self.recipients}]>"
 
 class Group(Channel):
     def __init__(self, channelID: str, name: str, recipients: dict[User], owner: User, **kwargs) -> None:
@@ -125,6 +129,9 @@ class Group(Channel):
         self.permissions: int|None = kwargs.get("permissions")
         self.nsfw: bool|None = kwargs.get("nsfw")
         super().__init__(channelID, ChannelType.Group, **kwargs)
+
+    def __repr__(self) -> str:
+        return f"<pyvolt.Group id={self.channelID} name={self.name} recipients=[{self.recipients}] owner={self.owner}>"
 
 class ServerChannel(Channel):
     def __init__(self, channelID: str, type: ChannelType, server, name: str, **kwargs) -> None:
@@ -142,6 +149,12 @@ class TextChannel(ServerChannel):
         self.lastMessageID: str|None = kwargs.get("lastMessageID")
         super().__init__(channelID, ChannelType.TextChannel, server, name, **kwargs)
 
+    def __repr__(self) -> str:
+        return f"<pyvolt.TextChannel id={self.channelID} server={self.server} name={self.name}>"
+
 class VoiceChannel(ServerChannel):
     def __init__(self, channelID: str, server, name: str, **kwargs) -> None:
         super().__init__(channelID, ChannelType.VoiceChannel, server, name, **kwargs)
+
+    def __repr__(self) -> str:
+        return f"<pyvolt.VoiceChannel id={self.channelID} server={self.server} name={self.name}>"
