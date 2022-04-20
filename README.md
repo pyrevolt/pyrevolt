@@ -4,7 +4,7 @@ A Python library to wrap the Revolt API, made to be easy-to-use but powerful and
 </div>
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-0.1.3--a-red)](https://img.shields.io/badge/version-0.1.3--a-red) [![Stability](https://img.shields.io/badge/stability-Use%20if%20experienced-important)](https://img.shields.io/badge/stability-Use%20if%20experienced-important)
+[![Version](https://img.shields.io/badge/version-0.1.4--a-red)](https://img.shields.io/badge/version-0.1.4--a-red) [![Stability](https://img.shields.io/badge/stability-Use%20if%20experienced-important)](https://img.shields.io/badge/stability-Use%20if%20experienced-important)
 </div>
 
 ## Installing pyrevolt
@@ -23,18 +23,21 @@ This shows a very quick example of how to use pyrevolt. As a note, pyrevolt is s
 ```py
 import pyrevolt
 
-@pyrevolt.Ready()
+bot = pyrevolt.Bot()
+
+@bot.on(pyrevolt.GatewayEvent.Ready)
 async def onReady(users: dict[pyrevolt.User], channels: dict[pyrevolt.Channel], servers: dict[pyrevolt.Server]) -> None:
     print("Ready!")
 
-@pyrevolt.OnMessage()
+@bot.on(pyrevolt.GatewayEvent.OnMessage)
 async def onMessage(message: pyrevolt.Message) -> None:
     print(f"{message.author.username} said: {message.content}")
     if message.content == "!ping":
-        await message.Send(content=f"Pong {message.author.username}!", embeds=[pyrevolt.Embed.Create(title="Pong!", description=f"<@{message.author.userID}>!", colour="#0000ff")])
+        await message.Send(content=f"Pong {message.author.username}!", embeds=[pyrevolt.Embed.Create(title="Pong!", description=f"{message.author.mention}!", colour="#0000ff")], replies=[pyrevolt.Reply(message.messageID, True)])
+        logChannel: pyrevolt.Channel = await bot.GetChannel("01FYEQGD3P7WJ6ST36QFPBT10Z")
+        await logChannel.Send(content=f"{message.author.username} said: {message.content}")
 
-bot = pyrevolt.Bot()
-bot.run(token="TOKEN")
+bot.Run(token="TOKEN")
 ```
 
 As the library expands, more examples will be added, but we expect users during the very initial development phases to read through the source in order to find how to develop (this will of course change over the development of the library).
