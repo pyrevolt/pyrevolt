@@ -1,8 +1,11 @@
 import asyncio
+from .gateway import GatewayEvent
 from .session import Session
+from .client import Method
+from .structs.channels import Channel
 
 class Bot:
-    async def start(self, *args, **kwargs) -> None:
+    async def Start(self, *args, **kwargs) -> None:
         self.session: Session = Session()
         await self.session.Start(kwargs["token"])
         while True:
@@ -14,11 +17,20 @@ class Bot:
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.session.Close()
 
-    def run(self, *args, **kwargs) -> None:
+    def Run(self, *args, **kwargs) -> None:
         async def runner():
             async with self:
-                await self.start(*args, **kwargs)
+                await self.Start(*args, **kwargs)
         try:
             asyncio.run(runner())
         except KeyboardInterrupt:
             return
+
+    def on(self, event: GatewayEvent) -> None:
+        def decorator(func: callable):
+            event.value.insertListener(func)
+            return func
+        return decorator
+
+    async def GetChannel(self, channelID: str) -> Channel:
+        return await self.session.GetChannel(channelID)
