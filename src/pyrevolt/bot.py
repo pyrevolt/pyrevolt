@@ -6,6 +6,7 @@ from .exceptions import InvalidSession
 from .gateway import GatewayEvent
 from .session import Session
 from .structs.channels import Channel, Message
+from .structs.user import User
 
 class Bot:
     class Commands:
@@ -44,9 +45,17 @@ class Bot:
                 for listener in self.commandListeners:
                     if command in self.commandListeners[listener]["triggers"]:
                         try:
+                            for arg in arguments[1:]:
+                                # Attempt to parse argument as channel, user, or role
+                                channel: bool|Channel = await Channel.AttemptParse(arg, self.bot.session)
+                                if channel is not False:
+                                    arguments[arguments.index(arg)] = channel
+                                user: bool|User = await User.AttemptParse(arg, self.bot.session)
+                                if user is not False:
+                                    arguments[arguments.index(arg)] = user
                             await listener(context, *tuple(arguments[1:]))
                         except Exception as error:
-                            for errorListener in self.commandListeners[listener]["errors"]:
+                            for errorListener in self.commandListeners[listener].get("errors", []):
                                 await errorListener(context, error)
                         break
 

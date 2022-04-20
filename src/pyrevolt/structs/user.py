@@ -101,3 +101,13 @@ class User:
         result: dict = await client.Request(request)
         await client.Close()
         return await User.FromJSON(json.dumps(result), session)
+
+    @staticmethod
+    async def AttemptParse(content: str, session: Session) -> User | bool:
+        if content.startswith("<@") and content.endswith(">"):
+            userID: str = content[2:content.find(">")]
+            user: User | None = session.users.get(userID)
+            if user is None:
+                user = await User.FromID(userID, session)
+            return user
+        return False

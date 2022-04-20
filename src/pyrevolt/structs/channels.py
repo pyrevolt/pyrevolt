@@ -91,6 +91,16 @@ class Channel:
             return
         return await Channel.FromJSON(json.dumps(result), session)
 
+    @staticmethod
+    async def AttemptParse(content: str, session: Session) -> Channel|bool:
+        if content.startswith("<#") and content.endswith(">"):
+            channelID: str = content[2:content.find(">")]
+            channel: Channel|None = session.channels.get(channelID)
+            if channel is None:
+                channel = await Channel.FromID(channelID, session)
+            return channel
+        return False
+
     async def Send(self, **kwargs) -> None:
         await Message.Create(self, **kwargs)
 
