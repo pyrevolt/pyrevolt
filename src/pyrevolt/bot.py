@@ -36,18 +36,18 @@ class Bot:
                 return func
             return decorator
 
-        async def DispatchCommand(self, message: Message) -> None:
-            if message.content.startswith(self.prefix):
-                arguments: dict[str] = message.content.split(" ")
+        async def DispatchCommand(self, context: Message) -> None:
+            if context.content.startswith(self.prefix):
+                arguments: dict[str] = context.content.split(" ")
                 command: str = arguments[0][len(self.prefix):]
 
                 for listener in self.commandListeners:
                     if command in self.commandListeners[listener]["triggers"]:
                         try:
-                            await listener(message, *tuple(arguments[1:]))
+                            await listener(context, *tuple(arguments[1:]))
                         except Exception as error:
                             for errorListener in self.commandListeners[listener]["errors"]:
-                                await errorListener(message, error)
+                                await errorListener(context, error)
                         break
 
     def __init__(self, **kwargs) -> None:
