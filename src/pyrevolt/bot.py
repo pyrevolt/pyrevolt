@@ -1,38 +1,38 @@
 from __future__ import annotations
 import asyncio
-import inspect
 import json
 from typing import Any
+from .exceptions import InvalidSession
 from .gateway import GatewayEvent
-from .events import OnMessage
 from .session import Session
 from .structs.channels import Channel, Message
 
 class Bot:
     class Commands:
         def __init__(self, bot: Bot, **kwargs) -> None:
-            self.commandListeners: dict[str, dict[callable]] = {}
-            self.errorListeners: dict[str, dict[callable]] = {}
+            self.commandListeners: dict[callable, dict[str, list[str]]] = {}
+            self.errorListeners: dict[callable, list[callable]] = {}
             self.bot: Bot = bot
-            self.prefix: str = kwargs.get("prefix")
+            self.prefix: str = kwargs.get("prefix", "")
 
         def Error(self, **kwargs) -> None:
             def decorator(func: callable) -> callable:
-                self.errorListeners[kwargs["name"]] = []
-                self.errorListeners[kwargs["name"]].append(func)
+                for listener in self.commandListeners:
+                    if kwargs["name"] in self.commandListeners[listener]["triggers"]:
+                        errors = self.commandListeners[listener].get("errors", [])
+                        errors.append(func)
+                        self.commandListeners[listener]["errors"] = errors
                 return func
             return decorator
 
         def Command(self, **kwargs) -> None:
             def decorator(func: callable) -> callable:
-                func.error = self.Error(**kwargs)
-                listeners: dict[callable] = self.commandListeners.get(kwargs["name"], [])
-                listeners.append(func)
-                self.commandListeners[kwargs["name"]] = listeners
+                func.Error = self.Error(**kwargs)
+                self.commandListeners[func] = {}
+                triggers: list[str] = [kwargs["name"]]
                 for alias in kwargs.get("aliases", []):
-                    listeners: dict[callable] = self.commandListeners.get(alias, [])
-                    listeners.append(func)
-                    self.commandListeners[alias] = listeners
+                    triggers.append(alias)
+                self.commandListeners[func]["triggers"] = triggers
                 return func
             return decorator
 
@@ -40,21 +40,23 @@ class Bot:
             if message.content.startswith(self.prefix):
                 arguments: dict[str] = message.content.split(" ")
                 command: str = arguments[0][len(self.prefix):]
-                if command in self.commandListeners:
-                    args: tuple(Any) = tuple(arguments[1:])
-                    for func in self.commandListeners[command]:
+
+                for listener in self.commandListeners:
+                    if command in self.commandListeners[listener]["triggers"]:
                         try:
-                            await func(message, *args)
+                            await listener(message, *tuple(arguments[1:]))
                         except Exception as error:
-                            if command in self.errorListeners:
-                                for func in self.errorListeners[command]:
-                                    await func(message, error)
+                            for errorListener in self.commandListeners[listener]["errors"]:
+                                await errorListener(message, error)
+                        break
 
     def __init__(self, **kwargs) -> None:
         self.commands = self.Commands(self, prefix=kwargs.get("prefix"))
 
     async def Start(self, *args, **kwargs) -> None:
         self.session: Session = Session()
+        if kwargs.get("token") is None:
+            raise InvalidSession("No token provided")
         await self.session.Start(kwargs["token"])
         while True:
             data: dict = await self.session.GatewayReceive()
