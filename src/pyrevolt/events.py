@@ -10,6 +10,9 @@ class EndTyping:
 class Ping:
     VALUE = "Ping"
 
+class Bulk:
+    VALUE = "Bulk"
+
 class Event:
     LISTENERS: dict[callable] = []
 

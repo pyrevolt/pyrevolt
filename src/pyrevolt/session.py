@@ -1,4 +1,5 @@
 import json
+from .exceptions import WebsocketError, InternalWebsocketError, InvalidSession, OnboardingNotFinished, AlreadyAuthenticated
 from .client import HTTPClient, Method, Request
 from .gateway import Gateway, GatewayEvent
 from .structs.channels import Channel, Message
@@ -31,8 +32,7 @@ class Session:
         request.AddAuthentication(self.token)
         return await self.client.Request(request)
 
-    async def GatewayReceive(self) -> dict:
-        data: dict = await self.gateway.Receive()
+    async def ProcessGateway(self, data: dict) -> dict:
         for event in GatewayEvent:
             if data["type"] == event.value.VALUE:
                 data["type"] = event.value
@@ -42,6 +42,24 @@ class Session:
         kwargs: dict = {}
 
         match data["type"]:
+            case GatewayEvent.Error.value:
+                match data["error"]:
+                    case "LabelMe":
+                        raise WebsocketError("An error occured")
+                    case "InternalError":
+                        raise InternalWebsocketError("An internal error occured")
+                    case "InvalidSession":
+                        raise InvalidSession("The session is invalid")
+                    case "OnboardingNotFinished":
+                        raise OnboardingNotFinished("The onboarding is not finished")
+                    case "AlreadyAuthenticated":
+                        raise AlreadyAuthenticated("The session is already authenticated")
+                    case _:
+                        raise WebsocketError("An error occured")
+            case GatewayEvent.Bulk.value:
+                for event in data["v"]:
+                    await self.ProcessGateway(event)
+                return
             case GatewayEvent.Ready.value:
                 for index, user in enumerate(data["users"]):
                     user: User = await User.FromJSON(json.dumps(user), self)
@@ -63,8 +81,21 @@ class Session:
                 if user is not None:
                     await user.Update(data["data"])
                     args.append(user)
-            case GatewayEvent.Message.value:
-                kwargs["message"] = await Message.FromJSON(data, self)
-                    
+            case GatewayEvent.OnMessage.value:
+                message: dict = data.copy()
+                message.pop("type")
+                kwargs["message"] = await Message.FromJSON(json.dumps(message), self)
+        
         await data["type"].dispatch(*args, **kwargs)
         return data
+
+    async def GatewayReceive(self) -> dict:
+        return await self.ProcessGateway(await self.gateway.Receive())
+
+    async def GetChannel(self, channelID: str) -> Channel:
+        if self.channels.get(channelID) is None:
+            data: dict = await self.Request(Method.GET, f"/channels/{channelID}")
+            channel: Channel = await channel.FromJSON(json.dumps(data), self)
+            return channel
+        else:
+            return self.channels[channelID]
