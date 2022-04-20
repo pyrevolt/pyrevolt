@@ -92,7 +92,7 @@ class Channel:
         return await Channel.FromJSON(json.dumps(result), session)
 
     async def Send(self, **kwargs) -> None:
-        await Message.Send(self, self.session, **kwargs)
+        await Message.Create(self, **kwargs)
 
 class SavedMessages(Channel):
     def __init__(self, channelID: str, user: User, **kwargs) -> None:
@@ -110,7 +110,7 @@ class DirectMessage(Channel):
         super().__init__(channelID, ChannelType.DirectMessage, **kwargs)
 
     def __repr__(self) -> str:
-        return f"<pyrevolt.DirectMessage id={self.channelID} active={self.active} recipients=[{self.recipients}]>"
+        return f"<pyrevolt.DirectMessage id={self.channelID} active={self.active} recipients={self.recipients}>"
 
 class Group(Channel):
     def __init__(self, channelID: str, name: str, recipients: dict[User], owner: User, **kwargs) -> None:
@@ -125,7 +125,7 @@ class Group(Channel):
         super().__init__(channelID, ChannelType.Group, **kwargs)
 
     def __repr__(self) -> str:
-        return f"<pyrevolt.Group id={self.channelID} name={self.name} recipients=[{self.recipients}] owner={self.owner}>"
+        return f"<pyrevolt.Group id={self.channelID} name={self.name} recipients={self.recipients} owner={self.owner}>"
 
 class ServerChannel(Channel):
     def __init__(self, channelID: str, type: ChannelType, server, name: str, **kwargs) -> None:
@@ -157,7 +157,6 @@ class EmbedType(Enum):
     Website = "Website"
     Image = "Image"
     Text = "Text"
-
 
 class EmbedImageSize(Enum):
     Large = "Large"
@@ -231,14 +230,14 @@ class Masquerade:
 
 
 class Reply:
-    def __init__(self, message: Message, mention: bool):
-        self.message: Message = message
+    def __init__(self, messageID: str, mention: bool):
+        self.messageID: str = messageID
         self.mention: bool = mention
 
     @staticmethod
-    async def FromJSON(jsonData: str | bytes) -> Reply:
+    async def FromJSON(jsonData: str | bytes, session: Session) -> Reply:
         data: dict = json.loads(jsonData)
-        return Reply(Message(data["message"]), data["mention"])
+        return Reply(data["id"], data["mention"])
 
 class Message:
     def __init__(self, messageID: str, channel: Channel, author: User, content, **kwargs):
@@ -259,7 +258,7 @@ class Message:
 
     @staticmethod
     async def FromJSON(jsonData: str | bytes, session: Session) -> Message:
-        data: dict = jsonData
+        data: dict = json.loads(jsonData)
         kwargs: dict = {}
         kwargs["session"] = session
         if data.get("nonce") is not None:
@@ -273,14 +272,21 @@ class Message:
         if data.get("mentions") is not None:
             kwargs["mentions"] = []
             for mention in data["mentions"]:
-                kwargs["mentions"].append(await User.FromJSON(json.dumps(mention), session))
+                kwargs["mentions"].append(await User.FromID(mention, session))
         if data.get("replies") is not None:
             kwargs["replies"] = []
             for reply in data["replies"]:
-                kwargs["replies"].append(await Reply.FromJSON(json.dumps(reply)))
+                kwargs["replies"].append(await Message.FromID(data["channel"], reply, session))
         if data.get("masquerade") is not None:
             kwargs["masquerade"] = await Masquerade.FromJSON(json.dumps(data["masquerade"]))
         return Message(data["_id"], await Channel.FromID(data["channel"], session), await User.FromID(data["author"], session), data["content"], **kwargs)
+
+    @staticmethod
+    async def FromID(channelID: str, messageID: str, session: Session) -> Message:
+        data: dict = await session.Request(Method.GET, f"/channels/{channelID}/messages/{messageID}")
+        if data.get("type") is not None:
+            return
+        return await Message.FromJSON(json.dumps(data), session)
 
     async def Send(self, **kwargs) -> Message:
         data: dict = {}
@@ -288,11 +294,27 @@ class Message:
         if kwargs.get("replies") is not None:
             data["replies"] = []
             for reply in kwargs["replies"]:
-                data["replies"].append({"id": reply.message.messageID, "mention": reply.mention})
+                data["replies"].append({"id": reply.messageID, "mention": reply.mention})
         if kwargs.get("embeds") is not None:
             data["embeds"] = []
             for embed in kwargs["embeds"]:
                 data["embeds"].append({"icon_url": embed.iconURL, "url": embed.url, "title": embed.title, "description": embed.description, "colour": embed.colour})
         if kwargs.get("masquerade") is not None:
             data["masquerade"] = {"id": kwargs["masquerade"].name, "avatar": kwargs["masquerade"].avatar}
-        await Message.FromJSON(await self.session.Request(Method.POST, f"/channels/{self.channel.channelID}/messages", data=data), self.session)
+        await Message.FromJSON(json.dumps(await self.session.Request(Method.POST, f"/channels/{self.channel.channelID}/messages", data=data)), self.session)
+
+    @staticmethod
+    async def Create(channel: Channel, **kwargs) -> Message:
+        data: dict = {}
+        data["content"] = kwargs.get("content", "")
+        if kwargs.get("replies") is not None:
+            data["replies"] = []
+            for reply in kwargs["replies"]:
+                data["replies"].append({"id": reply.messageID, "mention": reply.mention})
+        if kwargs.get("embeds") is not None:
+            data["embeds"] = []
+            for embed in kwargs["embeds"]:
+                data["embeds"].append({"icon_url": embed.iconURL, "url": embed.url, "title": embed.title, "description": embed.description, "colour": embed.colour})
+        if kwargs.get("masquerade") is not None:
+            data["masquerade"] = {"id": kwargs["masquerade"].name, "avatar": kwargs["masquerade"].avatar}
+        return await Message.FromJSON(json.dumps(await channel.session.Request(Method.POST, f"/channels/{channel.channelID}/messages", data=data)), channel.session)
