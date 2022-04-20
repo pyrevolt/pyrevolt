@@ -35,7 +35,7 @@ class Channel:
             case ChannelType.DirectMessage.value:
                 if data.get("last_message_id") is not None:
                     kwargs["lastMessageID"] = data["last_message_id"]
-                recipients: dict[User] = []
+                recipients: list[User] = []
                 for userID in data["recipients"]:
                     user: User|None = session.users.get(userID)
                     if user is None:
@@ -51,7 +51,7 @@ class Channel:
                     kwargs["permissions"] = data["permissions"]
                 if data.get("nsfw") is not None:
                     kwargs["nsfw"] = data["nsfw"]
-                recipients: dict[User] = []
+                recipients: list[User] = []
                 owner: User = None
                 for userID in data["recipients"]:
                     user: User|None = session.users.get(userID)
@@ -103,9 +103,9 @@ class SavedMessages(Channel):
         return f"<pyrevolt.SavedMessage id={self.channelID} user={self.user}>"
 
 class DirectMessage(Channel):
-    def __init__(self, channelID: str, active: bool, recipients: dict[User], **kwargs) -> None:
+    def __init__(self, channelID: str, active: bool, recipients: list[User], **kwargs) -> None:
         self.active: bool = active
-        self.recipients: dict[User] = recipients
+        self.recipients: list[User] = recipients
         self.lastMessageID: str|None = kwargs.get("lastMessageID")
         super().__init__(channelID, ChannelType.DirectMessage, **kwargs)
 
@@ -113,9 +113,9 @@ class DirectMessage(Channel):
         return f"<pyrevolt.DirectMessage id={self.channelID} active={self.active} recipients={self.recipients}>"
 
 class Group(Channel):
-    def __init__(self, channelID: str, name: str, recipients: dict[User], owner: User, **kwargs) -> None:
+    def __init__(self, channelID: str, name: str, recipients: list[User], owner: User, **kwargs) -> None:
         self.name: str = name
-        self.recipients: dict[User] = recipients
+        self.recipients: list[User] = recipients
         self.owner: User = owner
         self.description: str|None = kwargs.get("description")
         self.lastMessageID: str|None = kwargs.get("lastMessageID")
@@ -247,9 +247,9 @@ class Message:
         self.content = content
         self.nonce: str | None = kwargs.get("nonce")
         self.edited: str | None = kwargs.get("edited")
-        self.embeds: dict[Embed] | None = kwargs.get("embeds")
-        self.mentions: dict[User] | None = kwargs.get("mentions")
-        self.replies: dict[Message] | None = kwargs.get("replies")
+        self.embeds: list[Embed] | None = kwargs.get("embeds")
+        self.mentions: list[User] | None = kwargs.get("mentions")
+        self.replies: list[Message] | None = kwargs.get("replies")
         self.masquerade: Masquerade | None = kwargs.get("masquerade")
         self.session: Session = kwargs.get("session")
 

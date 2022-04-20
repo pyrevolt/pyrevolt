@@ -7,10 +7,10 @@ if TYPE_CHECKING:
     from ..session import Session
 
 class Category:
-    def __init__(self, categoryID: str, title: str, channels: dict[ServerChannel]) -> None:
+    def __init__(self, categoryID: str, title: str, channels: list[ServerChannel]) -> None:
         self.categoryID: str = categoryID
         self.title: str = title
-        self.channels: dict[ServerChannel] = channels
+        self.channels: list[ServerChannel] = channels
 
     def __repr__(self) -> str:
         return f"<pyrevolt.Category id={self.categoryID} title={self.title} channels={self.channels}>"
@@ -18,7 +18,7 @@ class Category:
     @staticmethod
     async def FromJSON(jsonData: str|bytes, session: Session) -> Category:
         data: dict = json.loads(jsonData)
-        channels: dict[ServerChannel] = []
+        channels: list[ServerChannel] = []
         for channel in data["channels"]:
             channel: ServerChannel|None = await ServerChannel.FromID(channel, session)
             if channel is not None:
@@ -75,11 +75,11 @@ class Role:
         return Role(data["_id"], data["name"], data["permissions"], **kwargs)
 
 class Server:
-    def __init__(self, serverID: str, owner: User, name: str, channels: dict[ServerChannel], defaultPermissions, **kwargs) -> None:
+    def __init__(self, serverID: str, owner: User, name: str, channels: list[ServerChannel], defaultPermissions, **kwargs) -> None:
         self.serverID: str = serverID
         self.owner: User = owner
         self.name: str = name
-        self.channels: dict[ServerChannel] = channels
+        self.channels: list[ServerChannel] = channels
         self.defaultPermissions = defaultPermissions
         self.categories: Category|None = kwargs.get("categories")
         self.systemMessages: SystemMessages|None = kwargs.get("systemMessages")
@@ -96,19 +96,19 @@ class Server:
     async def FromJSON(jsonData: str|bytes, session: Session) -> Server:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
-        channels: dict[ServerChannel] = []
+        channels: list[ServerChannel] = []
         for channel in data["channels"]:
             channels.append(await ServerChannel.FromID(channel, session))
 
         if data.get("categories") is not None:
-            categories: dict[Category] = []
+            categories: list[Category] = []
             for category in data["categories"]:
                 categories.append(await Category.FromJSON(json.dumps(category), session))
             kwargs["categories"] = categories
         if data.get("systemMessages") is not None:
             kwargs["systemMessages"] = await SystemMessages.FromJSON(json.dumps(data["systemMessages"]), session)
         if data.get("roles") is not None:
-            roles: dict[Role] = []
+            roles: list[Role] = []
             for roleID, role in data["roles"].items():
                 role["_id"] = roleID
                 roles.append(await Role.FromJSON(json.dumps(role), session))

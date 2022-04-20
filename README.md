@@ -23,19 +23,26 @@ This shows a very quick example of how to use pyrevolt. As a note, pyrevolt is s
 ```py
 import pyrevolt
 
-bot = pyrevolt.Bot()
+bot = pyrevolt.Bot(prefix="!")
 
-@bot.on(pyrevolt.GatewayEvent.Ready)
-async def onReady(users: dict[pyrevolt.User], channels: dict[pyrevolt.Channel], servers: dict[pyrevolt.Server]) -> None:
+@pyrevolt.Ready()
+async def onReady(users: list[pyrevolt.User], channels: list[pyrevolt.Channel], servers: list[pyrevolt.Server]) -> None:
     print("Ready!")
 
 @bot.on(pyrevolt.GatewayEvent.OnMessage)
 async def onMessage(message: pyrevolt.Message) -> None:
     print(f"{message.author.username} said: {message.content}")
-    if message.content == "!ping":
-        await message.Send(content=f"Pong {message.author.username}!", embeds=[pyrevolt.Embed.Create(title="Pong!", description=f"{message.author.mention}!", colour="#0000ff")], replies=[pyrevolt.Reply(message.messageID, True)])
-        logChannel: pyrevolt.Channel = await bot.GetChannel("01FYEQGD3P7WJ6ST36QFPBT10Z")
-        await logChannel.Send(content=f"{message.author.username} said: {message.content}")
+
+@bot.commands.Command(name="ping")
+async def ping(message: pyrevolt.Message) -> None:
+    await message.Send(content=f"Pong {message.author.username}!", embeds=[pyrevolt.Embed.Create(title="Pong!", description=f"{message.author.mention}!", colour="#0000ff")], replies=[pyrevolt.Reply(message.messageID, True)])
+
+@bot.commands.Command(name="hello", aliases=["hi"])
+async def hello(message: pyrevolt.Message, name: str) -> None:
+    await message.Send(content=f"Hello {name}!")
+@hello.Error
+async def helloError(message: pyrevolt.Message, error: Exception) -> None:
+    await message.Send(content=f"{str(error)}")
 
 bot.Run(token="TOKEN")
 ```

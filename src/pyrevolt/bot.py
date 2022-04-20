@@ -38,7 +38,7 @@ class Bot:
 
         async def DispatchCommand(self, context: Message) -> None:
             if context.content.startswith(self.prefix):
-                arguments: dict[str] = context.content.split(" ")
+                arguments: list[str] = context.content.split(" ")
                 command: str = arguments[0][len(self.prefix):]
 
                 for listener in self.commandListeners:

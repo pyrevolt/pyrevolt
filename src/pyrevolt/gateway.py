@@ -54,7 +54,7 @@ class GatewayKeepAlive(Thread):
             func = asyncio.run_coroutine_threadsafe(coro, self.gateway.loop)
             func.result(10)
 
-    def GetPayload(self) -> dict[str]:
+    def GetPayload(self) -> dict[str, str|int]:
         return {
             "type": GatewayEvent.Ping.value.VALUE,
             "data": 0
