@@ -69,6 +69,10 @@ class User:
         self.flags = updateData.get("flags", self.flags)
         self.bot = updateData.get("bot", self.bot)
 
+    @property
+    def mention(self) -> str:
+        return f"<@{self.userID}>"
+
     @staticmethod
     async def FromJSON(jsonData: str|bytes, session: Session) -> User:
         data: dict = json.loads(jsonData)
