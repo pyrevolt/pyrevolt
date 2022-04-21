@@ -14,6 +14,7 @@ class Session:
         self.users: dict[str, User] = {}
         self.channels: dict[str, Channel] = {}
         self.servers: dict[str, Server] = {}
+        self.messages: dict[str, Message] = {}
 
     async def Connect(self) -> None:
         await self.gateway.Connect()
@@ -38,7 +39,7 @@ class Session:
                 data["type"] = event.value
                 break
 
-        args: dict = []
+        args: list = []
         kwargs: dict = {}
 
         match data["type"]:
@@ -73,18 +74,64 @@ class Session:
                     server: Server = await Server.FromJSON(json.dumps(server), self)
                     data["servers"][index] = server
                     self.servers[server.serverID] = server
-                kwargs["users"] = data["users"]
-                kwargs["channels"] = data["channels"]
-                kwargs["servers"] = data["servers"]
-            case GatewayEvent.UserUpdate.value:
-                user: User | None = self.users.get(data["id"])
-                if user is not None:
-                    await user.Update(data["data"])
-                    args.append(user)
+                args.append(data["users"])
+                args.append(data["channels"])
+                args.append(data["servers"])
             case GatewayEvent.OnMessage.value:
                 message: dict = data.copy()
                 message.pop("type")
-                kwargs["message"] = await Message.FromJSON(json.dumps(message), self)
+                message: Message = await Message.FromJSON(json.dumps(message), self)
+                self.messages[message.messageID] = message
+                args.append(message)
+            case GatewayEvent.MessageUpdate.value:
+                message: Message = self.messages.get(data["id"], await Message.FromID(data["channel"], data["id"], self)).copy()
+                args.append(message)
+                newMessage: Message = await Message.FromID(data["channel"], data["id"], self)
+                await newMessage.update(data["data"])
+                if newMessage.content == message.content:
+                    return {"type": data["type"]}
+                args.append(newMessage)
+            case GatewayEvent.MessageDelete.value:
+                message: Message = self.messages.get(data["id"])
+                if message is None:
+                    return {"type": data["type"]}
+                self.messages.pop(data["id"])
+                args.append(message)
+            case GatewayEvent.ChannelCreate.value:
+                channel: Channel = await Channel.FromJSON(json.dumps(data), self)
+                self.channels[channel.channelID] = channel
+                args.append(channel)
+            case GatewayEvent.ChannelUpdate.value:
+                channel: Channel = self.channels.get(data["id"], await Channel.FromID(data["id"], self)).copy()
+                args.append(channel)
+                newChannel: Channel = await Channel.FromID(data["id"], self)
+                await newChannel.update(data["data"], data.get("clear", []))
+                args.append(newChannel)
+            case GatewayEvent.ChannelDelete.value:
+                channel: Channel = self.channels.get(data["id"])
+                if channel is None:
+                    return {"type": data["type"]}
+                self.channels.pop(data["id"])
+                args.append(channel)
+            case GatewayEvent.ChannelGroupJoin.value | GatewayEvent.ChannelGroupLeave.value:
+                channel: Channel = self.channels.get(data["id"], await Channel.FromID(data["id"], self))
+                user: User = self.users.get(data["user"], await User.FromID(data["user"], self))
+                if data["type"] == GatewayEvent.ChannelGroupJoin.value:
+                    channel.users.append(user)
+                else:
+                    channel.users.remove(user)
+                args.append(channel)
+                args.append(user)
+            case GatewayEvent.ChannelStartTyping.value | GatewayEvent.ChannelStopTyping.value:
+                channel: Channel = self.channels.get(data["id"], await Channel.FromID(data["id"], self))
+                user: User = self.users.get(data["user"], await User.FromID(data["user"], self))
+                args.append(channel)
+                args.append(user)
+            case GatewayEvent.UserUpdate.value:
+                user: User | None = self.users.get(data["id"])
+                if user is not None:
+                    await user.update(data["data"])
+                    args.append(user)
         
         await data["type"].dispatch(*args, **kwargs)
         return data
