@@ -54,5 +54,5 @@ As the library expands, more examples will be added, but we expect users during 
 [![CodeFactor](https://www.codefactor.io/repository/github/genericnerd/pyrevolt/badge)](https://www.codefactor.io/repository/github/genericnerd/pyrevolt)
 [![CircleCI](https://circleci.com/gh/GenericNerd/pyrevolt.svg?style=shield)](https://app.circleci.com/pipelines/github/GenericNerd/pyrevolt)
 #### Repository Information
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL v3](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/GenericNerd/pyrevolt.svg)](http://isitmaintained.com/project/GenericNerd/pyrevolt "Percentage of issues still open")
