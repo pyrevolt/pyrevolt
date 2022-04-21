@@ -58,7 +58,7 @@ class User:
     def __repr__(self) -> str:
         return f"<pyrevolt.User id={self.userID} username={self.username} badges={self.badges} relationship={self.relationship} online={self.online} bot={self.bot}>"
 
-    async def Update(self, updateData: dict) -> None:
+    async def update(self, updateData: dict) -> None:
         self.username = updateData.get("username", self.username)
         self.badges = updateData.get("badges", self.badges)
         self.online = updateData.get("online", self.online)

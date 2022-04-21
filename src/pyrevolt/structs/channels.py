@@ -3,7 +3,7 @@ from enum import Enum
 import json
 from ..client import Method
 from .user import User
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from ..session import Session
 
@@ -18,7 +18,13 @@ class Channel:
     def __init__(self, channelID: str, type: ChannelType, **kwargs) -> None:
         self.channelID: str = channelID
         self.type: ChannelType = type
-        self.session = kwargs.get("session")
+        self.session: Session|None = kwargs.get("session")
+
+    async def update(self, data: dict, clear: list[str]) -> None:
+        for key, value in data.items():
+            setattr(self, key, value)
+        for key in clear:
+            setattr(self, key, None)
 
     @staticmethod
     async def FromJSON(jsonData: str|bytes, session: Session) -> Channel:
@@ -109,6 +115,9 @@ class SavedMessages(Channel):
         self.user: User = user
         super().__init__(channelID, ChannelType.SavedMessages, **kwargs)
 
+    def copy(self) -> SavedMessages:
+        return SavedMessages(self.channelID, self.user, session=self.session)
+
     def __repr__(self) -> str:
         return f"<pyrevolt.SavedMessage id={self.channelID} user={self.user}>"
 
@@ -118,6 +127,9 @@ class DirectMessage(Channel):
         self.recipients: list[User] = recipients
         self.lastMessageID: str|None = kwargs.get("lastMessageID")
         super().__init__(channelID, ChannelType.DirectMessage, **kwargs)
+
+    def copy(self) -> DirectMessage:
+        return DirectMessage(self.channelID, self.active, self.recipients, session=self.session)
 
     def __repr__(self) -> str:
         return f"<pyrevolt.DirectMessage id={self.channelID} active={self.active} recipients={self.recipients}>"
@@ -133,6 +145,9 @@ class Group(Channel):
         self.permissions: int|None = kwargs.get("permissions")
         self.nsfw: bool|None = kwargs.get("nsfw")
         super().__init__(channelID, ChannelType.Group, **kwargs)
+
+    def copy(self) -> Group:
+        return Group(self.channelID, self.name, self.recipients, self.owner, session=self.session)
 
     def __repr__(self) -> str:
         return f"<pyrevolt.Group id={self.channelID} name={self.name} recipients={self.recipients} owner={self.owner}>"
@@ -153,12 +168,18 @@ class TextChannel(ServerChannel):
         self.lastMessageID: str|None = kwargs.get("lastMessageID")
         super().__init__(channelID, ChannelType.TextChannel, server, name, **kwargs)
 
+    def copy(self) -> TextChannel:
+        return TextChannel(self.channelID, self.server, self.name, session=self.session)
+
     def __repr__(self) -> str:
         return f"<pyrevolt.TextChannel id={self.channelID} server={self.server} name={self.name}>"
 
 class VoiceChannel(ServerChannel):
     def __init__(self, channelID: str, server, name: str, **kwargs) -> None:
         super().__init__(channelID, ChannelType.VoiceChannel, server, name, **kwargs)
+
+    def copy(self) -> VoiceChannel:
+        return VoiceChannel(self.channelID, self.server, self.name, session=self.session)
 
     def __repr__(self) -> str:
         return f"<pyrevolt.VoiceChannel id={self.channelID} server={self.server} name={self.name}>"
@@ -197,6 +218,14 @@ class Embed:
                 self.colour: str | None = kwargs.get("colour")
             case None:
                 return
+
+    def __repr__(self) -> str:
+        return f"<pyrevolt.Embed type={self.type}>"
+
+    def toJSON(self) -> str:
+        data: dict[str, Any] = self.__dict__
+        data["type"] = None
+        return json.dumps(data)
 
     @staticmethod
     async def FromJSON(jsonData: str | bytes) -> Embed:
@@ -287,6 +316,10 @@ class Message:
         if updatedData.get("masquerade") is not None:
             self.masquerade = await Masquerade.FromJSON(json.dumps(updatedData["masquerade"]))
 
+    @property
+    def url(self) -> str:
+        return f"https://app.revolt.chat/channel/{self.channel.channelID}/{self.messageID}"
+
     @staticmethod
     async def FromJSON(jsonData: str | bytes, session: Session) -> Message:
         data: dict = json.loads(jsonData)
@@ -324,22 +357,35 @@ class Message:
     @staticmethod
     async def generateMessageData(**kwargs) -> dict:
         data: dict = {}
-        data["content"] = kwargs.get("content", "")
+        data["content"] = kwargs.get("content", "​")
         if kwargs.get("replies") is not None:
             data["replies"] = []
             for reply in kwargs["replies"]:
                 data["replies"].append({"id": reply.messageID, "mention": reply.mention})
+        if kwargs.get("embed") is not None:
+            data["embeds"] = [json.loads(kwargs["embed"].toJSON())]
         if kwargs.get("embeds") is not None:
-            data["embeds"] = []
+            data["embeds"] = data.get("embeds", [])
             for embed in kwargs["embeds"]:
-                data["embeds"].append({"icon_url": embed.iconURL, "url": embed.url, "title": embed.title, "description": embed.description, "colour": embed.colour})
+                data["embeds"].append(json.loads(embed.toJSON()))
         if kwargs.get("masquerade") is not None:
             data["masquerade"] = {"id": kwargs["masquerade"].name, "avatar": kwargs["masquerade"].avatar}
         return data
 
     async def Send(self, **kwargs) -> Message:
-        await Message.FromJSON(json.dumps(await self.session.Request(Method.POST, f"/channels/{self.channel.channelID}/messages", data=await Message.generateMessageData(**kwargs))), self.session)
+        data: dict = await Message.generateMessageData(**kwargs)
+        await Message.FromJSON(json.dumps(await self.session.Request(Method.POST, f"/channels/{self.channel.channelID}/messages", data=data)), self.session)
 
     @staticmethod
     async def Create(channel: Channel, **kwargs) -> Message:
         return await Message.FromJSON(json.dumps(await channel.session.Request(Method.POST, f"/channels/{channel.channelID}/messages", data=await Message.generateMessageData(**kwargs))), channel.session)
+
+    def copy(self) -> Message:
+        kwargs: dict = {}
+        kwargs["nonce"] = self.nonce
+        kwargs["edited"] = self.edited
+        kwargs["embeds"] = self.embeds
+        kwargs["mentions"] = self.mentions
+        kwargs["replies"] = self.replies
+        kwargs["masquerade"] = self.masquerade
+        return Message(self.messageID, self.channel, self.author, self.content)
