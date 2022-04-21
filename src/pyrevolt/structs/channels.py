@@ -266,6 +266,27 @@ class Message:
     def __repr__(self) -> str:
         return f"<pyrevolt.Message id={self.messageID} channel={self.channel} author={self.author}>"
 
+    async def update(self, updatedData: dict) -> None:
+        self.content = updatedData.get("content", self.content)
+        self.edited = updatedData.get("edited", self.edited)
+        if updatedData.get("embeds") is not None:
+            embeds: list[Embed] = []
+            for embed in updatedData["embeds"]:
+                embeds.append(await Embed.FromJSON(json.dumps(embed)))
+            self.embeds = embeds
+        if updatedData.get("mentions") is not None:
+            mentions: list[User] = []
+            for mention in updatedData["mentions"]:
+                mentions.append(await User.FromJSON(json.dumps(mention), self.session))
+            self.mentions = mentions
+        if updatedData.get("replies") is not None:
+            replies: list[Message] = []
+            for reply in updatedData["replies"]:
+                replies.append(await Message.FromJSON(json.dumps(reply), self.session))
+            self.replies = replies
+        if updatedData.get("masquerade") is not None:
+            self.masquerade = await Masquerade.FromJSON(json.dumps(updatedData["masquerade"]))
+
     @staticmethod
     async def FromJSON(jsonData: str | bytes, session: Session) -> Message:
         data: dict = json.loads(jsonData)
@@ -293,12 +314,15 @@ class Message:
 
     @staticmethod
     async def FromID(channelID: str, messageID: str, session: Session) -> Message:
+        if session.messages.get(messageID) is not None:
+            return session.messages[messageID]
         data: dict = await session.Request(Method.GET, f"/channels/{channelID}/messages/{messageID}")
         if data.get("type") is not None:
             return
         return await Message.FromJSON(json.dumps(data), session)
 
-    async def Send(self, **kwargs) -> Message:
+    @staticmethod
+    async def generateMessageData(**kwargs) -> dict:
         data: dict = {}
         data["content"] = kwargs.get("content", "")
         if kwargs.get("replies") is not None:
@@ -311,20 +335,11 @@ class Message:
                 data["embeds"].append({"icon_url": embed.iconURL, "url": embed.url, "title": embed.title, "description": embed.description, "colour": embed.colour})
         if kwargs.get("masquerade") is not None:
             data["masquerade"] = {"id": kwargs["masquerade"].name, "avatar": kwargs["masquerade"].avatar}
-        await Message.FromJSON(json.dumps(await self.session.Request(Method.POST, f"/channels/{self.channel.channelID}/messages", data=data)), self.session)
+        return data
+
+    async def Send(self, **kwargs) -> Message:
+        await Message.FromJSON(json.dumps(await self.session.Request(Method.POST, f"/channels/{self.channel.channelID}/messages", data=await Message.generateMessageData(**kwargs))), self.session)
 
     @staticmethod
     async def Create(channel: Channel, **kwargs) -> Message:
-        data: dict = {}
-        data["content"] = kwargs.get("content", "")
-        if kwargs.get("replies") is not None:
-            data["replies"] = []
-            for reply in kwargs["replies"]:
-                data["replies"].append({"id": reply.messageID, "mention": reply.mention})
-        if kwargs.get("embeds") is not None:
-            data["embeds"] = []
-            for embed in kwargs["embeds"]:
-                data["embeds"].append({"icon_url": embed.iconURL, "url": embed.url, "title": embed.title, "description": embed.description, "colour": embed.colour})
-        if kwargs.get("masquerade") is not None:
-            data["masquerade"] = {"id": kwargs["masquerade"].name, "avatar": kwargs["masquerade"].avatar}
-        return await Message.FromJSON(json.dumps(await channel.session.Request(Method.POST, f"/channels/{channel.channelID}/messages", data=data)), channel.session)
+        return await Message.FromJSON(json.dumps(await channel.session.Request(Method.POST, f"/channels/{channel.channelID}/messages", data=await Message.generateMessageData(**kwargs))), channel.session)
