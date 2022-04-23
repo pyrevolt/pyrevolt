@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+from ..client import Method
 from ..structs.channels import ServerChannel
 from ..structs.user import User
 from typing import TYPE_CHECKING
@@ -62,6 +63,12 @@ class Role:
     def __repr__(self) -> str:
         return f"<pyrevolt.Roles name={self.name} permissions={self.permissions} colour={self.colour} hoist={self.hoist} rank={self.rank}>"
 
+    async def update(self, updatedData: dict, clear: list[str] = []) -> None:
+        for key, value in updatedData.items():
+            setattr(self, key, value)
+        for key in clear:
+            setattr(self, key, None)
+
     @staticmethod
     async def FromJSON(jsonData: str|bytes, session: Session) -> Role:
         data: dict = json.loads(jsonData)
@@ -83,7 +90,7 @@ class Server:
         self.defaultPermissions = defaultPermissions
         self.categories: Category|None = kwargs.get("categories")
         self.systemMessages: SystemMessages|None = kwargs.get("systemMessages")
-        self.roles: Role|None = kwargs.get("roles")
+        self.roles: dict[str, Role]|None = kwargs.get("roles")
         self.nsfw: bool|None = kwargs.get("nsfw")
         self.flags: int|None = kwargs.get("flags")
         self.analytics: bool|None = kwargs.get("analytics")
@@ -92,6 +99,48 @@ class Server:
     def __repr__(self) -> str:
         return f"<pyrevolt.Server id={self.serverID} owner={self.owner} name={self.name} channels={self.channels} defaultPermissions={self.defaultPermissions} categories={self.categories} systemMessages={self.systemMessages} roles={self.roles} nsfw={self.nsfw} flags={self.flags} analytics={self.analytics} discoverable={self.discoverable}>"
     
+    def copy(self) -> Server:
+        return Server(self.serverID, self.owner, self.name, self.channels, self.defaultPermissions, categories=self.categories, systemMessages=self.systemMessages, roles=self.roles, nsfw=self.nsfw, flags=self.flags, analytics=self.analytics, discoverable=self.discoverable)
+
+    async def update(self, updatedData: dict, clear: list[str] = [], **kwargs) -> None:
+        if updatedData.get("owner") is not None:
+            self.owner = await User.FromID(updatedData["owner"], kwargs["session"])
+        if updatedData.get("name") is not None:
+            self.name = updatedData["name"]
+        if updatedData.get("channels") is not None:
+            self.channels = []
+            for channel in updatedData["channels"]:
+                channel: ServerChannel|None = await ServerChannel.FromJSON(json.dumps(channel), kwargs["session"])
+                if channel is not None:
+                    self.channels.append(channel)
+        if updatedData.get("default_permissions") is not None:
+            self.defaultPermissions = updatedData["default_permissions"]
+        if updatedData.get("categories") is not None:
+            self.categories = []
+            for category in updatedData["categories"]:
+                category: Category|None = await Category.FromJSON(json.dumps(category), kwargs["session"])
+                if category is not None:
+                    self.categories.append(category)
+        if updatedData.get("systemMessages") is not None:
+            self.systemMessages = SystemMessages.FromJSON(json.dumps(updatedData["systemMessages"]), kwargs["session"])
+        if updatedData.get("roles") is not None:
+            self.roles = {}
+            for role in updatedData["roles"]:
+                role: Role|None = await Role.FromJSON(json.dumps(role), kwargs["session"])
+                if role is not None:
+                    self.roles[role.roleID] = role
+        if updatedData.get("nsfw") is not None:
+            self.nsfw = updatedData["nsfw"]
+        if updatedData.get("flags") is not None:
+            self.flags = updatedData["flags"]
+        if updatedData.get("analytics") is not None:
+            self.analytics = updatedData["analytics"]
+        if updatedData.get("discoverable") is not None:
+            self.discoverable = updatedData["discoverable"]
+
+        for key in clear:
+            setattr(self, key, None)
+
     @staticmethod
     async def FromJSON(jsonData: str|bytes, session: Session) -> Server:
         data: dict = json.loads(jsonData)
@@ -108,10 +157,10 @@ class Server:
         if data.get("systemMessages") is not None:
             kwargs["systemMessages"] = await SystemMessages.FromJSON(json.dumps(data["systemMessages"]), session)
         if data.get("roles") is not None:
-            roles: list[Role] = []
+            roles: dict[str, Role] = {}
             for roleID, role in data["roles"].items():
                 role["_id"] = roleID
-                roles.append(await Role.FromJSON(json.dumps(role), session))
+                roles[roleID] = await Role.FromJSON(json.dumps(role), session)
             kwargs["roles"] = roles
         if data.get("nsfw") is not None:
             kwargs["nsfw"] = data["nsfw"]
@@ -125,3 +174,12 @@ class Server:
         server: Server = Server(data["_id"], await User.FromID(data["owner"], session), data["name"], channels, data["default_permissions"], **kwargs)
         session.servers[server.serverID] = server
         return server
+
+    @staticmethod
+    async def FromID(serverID: str, session: Session) -> Server:
+        if session.servers.get(serverID) is not None:
+            return session.servers[serverID]
+        result: dict = await session.Request(Method.GET, f"/servers/{serverID}")
+        if result.get("type") is not None:
+            return
+        return await Server.FromJSON(json.dumps(result), session)
