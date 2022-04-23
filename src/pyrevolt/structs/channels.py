@@ -20,7 +20,7 @@ class Channel:
         self.type: ChannelType = type
         self.session: Session|None = kwargs.get("session")
 
-    async def update(self, data: dict, clear: list[str]) -> None:
+    async def update(self, data: dict, clear: list[str] = []) -> None:
         for key, value in data.items():
             setattr(self, key, value)
         for key in clear:
@@ -295,6 +295,16 @@ class Message:
     def __repr__(self) -> str:
         return f"<pyrevolt.Message id={self.messageID} channel={self.channel} author={self.author}>"
 
+    def copy(self) -> Message:
+        kwargs: dict = {}
+        kwargs["nonce"] = self.nonce
+        kwargs["edited"] = self.edited
+        kwargs["embeds"] = self.embeds
+        kwargs["mentions"] = self.mentions
+        kwargs["replies"] = self.replies
+        kwargs["masquerade"] = self.masquerade
+        return Message(self.messageID, self.channel, self.author, self.content)
+
     async def update(self, updatedData: dict) -> None:
         self.content = updatedData.get("content", self.content)
         self.edited = updatedData.get("edited", self.edited)
@@ -343,7 +353,9 @@ class Message:
                 kwargs["replies"].append(await Message.FromID(data["channel"], reply, session))
         if data.get("masquerade") is not None:
             kwargs["masquerade"] = await Masquerade.FromJSON(json.dumps(data["masquerade"]))
-        return Message(data["_id"], await Channel.FromID(data["channel"], session), await User.FromID(data["author"], session), data["content"], **kwargs)
+        message: Message = Message(data["_id"], await Channel.FromID(data["channel"], session), await User.FromID(data["author"], session), data["content"], **kwargs)
+        session.messages[data["_id"]] = message
+        return message
 
     @staticmethod
     async def FromID(channelID: str, messageID: str, session: Session) -> Message:
@@ -379,13 +391,3 @@ class Message:
     @staticmethod
     async def Create(channel: Channel, **kwargs) -> Message:
         return await Message.FromJSON(json.dumps(await channel.session.Request(Method.POST, f"/channels/{channel.channelID}/messages", data=await Message.generateMessageData(**kwargs))), channel.session)
-
-    def copy(self) -> Message:
-        kwargs: dict = {}
-        kwargs["nonce"] = self.nonce
-        kwargs["edited"] = self.edited
-        kwargs["embeds"] = self.embeds
-        kwargs["mentions"] = self.mentions
-        kwargs["replies"] = self.replies
-        kwargs["masquerade"] = self.masquerade
-        return Message(self.messageID, self.channel, self.author, self.content)
