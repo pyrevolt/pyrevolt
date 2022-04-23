@@ -38,6 +38,8 @@ class Bot:
             return decorator
 
         async def DispatchCommand(self, context: Message) -> None:
+            if not isinstance(context.content, str):
+                return
             if context.content.startswith(self.prefix):
                 arguments: list[str] = context.content.split(" ")
                 command: str = arguments[0][len(self.prefix):]
