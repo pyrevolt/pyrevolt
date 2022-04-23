@@ -58,7 +58,7 @@ class User:
     def __repr__(self) -> str:
         return f"<pyrevolt.User id={self.userID} username={self.username} badges={self.badges} relationship={self.relationship} online={self.online} bot={self.bot}>"
 
-    async def copy(self) -> User:
+    def copy(self) -> User:
         return User(self.userID, self.username, badges=self.badges, online=self.online, relationship=self.relationship, status=self.status, flags=self.flags, bot=self.bot)
 
     async def update(self, updateData: dict, clear: list[str] = []) -> None:
