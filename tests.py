@@ -1,7 +1,7 @@
 import asyncio
 import unittest
 import os
-from src import pyrevolt
+import pyrevolt
 
 class HTTPTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
