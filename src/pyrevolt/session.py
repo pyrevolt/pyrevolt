@@ -3,8 +3,8 @@ from .exceptions import WebsocketError, InternalWebsocketError, InvalidSession, 
 from .client import HTTPClient, Method, Request
 from .gateway import Gateway, GatewayEvent
 from .structs.channels import Channel, Message
-from .structs.user import User
-from .structs.server import Server
+from .structs.user import Relationship, User
+from .structs.server import Server, Role
 
 class Session:
     def __init__(self) -> None:
@@ -127,11 +127,63 @@ class Session:
                 user: User = self.users.get(data["user"], await User.FromID(data["user"], self))
                 args.append(channel)
                 args.append(user)
+            case GatewayEvent.ChannelAck.value:
+                # Could use this for possible implementation in the future
+                pass
+            case GatewayEvent.ServerCreate.value:
+                server: Server = await Server.FromJSON(json.dumps(data), self)
+                self.servers[server.serverID] = server
+                args.append(server)
+            case GatewayEvent.ServerUpdate.value:
+                server: Server = self.servers.get(data["id"], await Server.FromID(data["id"], self)).copy()
+                args.append(server)
+                newServer: Server = await Server.FromID(data["id"], self)
+                await newServer.update(data["data"], data.get("clear", []), session=self)
+                args.append(newServer)
+            case GatewayEvent.ServerDelete.value:
+                server: Server = self.servers.get(data["id"])
+                if server is None:
+                    return {"type": data["type"]}
+                self.servers.pop(data["id"])
+                args.append(server)
+            case GatewayEvent.ServerMemberUpdate.value:
+                pass
+            case GatewayEvent.ServerMemberJoin.value | GatewayEvent.ServerMemberLeave.value:
+                server: Server = self.servers.get(data["id"], await Server.FromID(data["id"], self))
+                user: User = self.users.get(data["user"], await User.FromID(data["user"], self))
+                if data["type"] == GatewayEvent.ServerMemberJoin.value:
+                    server.users.append(user)
+                else:
+                    server.users.remove(user)
+                args.append(server)
+                args.append(user)
+            case GatewayEvent.ServerRoleUpdate.value:
+                server: Server = self.servers.get(data["id"], await Server.FromID(data["id"], self))
+                if server.roles.get(data["role_id"]) is None:
+                    data["data"]["_id"] = data["role_id"]
+                    server.roles[data["role_id"]] = await Role.FromJSON(json.dumps(data["data"]), self)
+                else:
+                    await server.roles[data["role_id"]].update(data["data"], data.get("clear", []))
+                args.append(server)
+                args.append(server.roles[data["role_id"]])
+            case GatewayEvent.ServerRoleDelete.value:
+                server: Server = self.servers.get(data["id"], await Server.FromID(data["id"], self))
+                if server.roles.get(data["role_id"]) is None:
+                    return {"type": data["type"]}
+                args.append(server)
+                args.append(server.roles[data["role_id"]])
+                server.roles.pop(data["role_id"])
             case GatewayEvent.UserUpdate.value:
-                user: User | None = self.users.get(data["id"])
-                if user is not None:
-                    await user.update(data["data"])
-                    args.append(user)
+                user: User = self.users.get(data["id"], await User.FromID(data["id"], self)).copy()
+                args.append(user)
+                newUser: User = await User.FromID(data["id"], self)
+                await newUser.update(data["data"], data.get("clear", []))
+                args.append(newUser)
+            case GatewayEvent.UserRelationship.value:
+                user: User = self.users.get(data["user"], await User.FromID(data["user"], self))
+                await user.update({"relationship": data["status"]})
+                args.append(user)
+                args.append(Relationship(data["status"]))
         
         await data["type"].dispatch(*args, **kwargs)
         return data
