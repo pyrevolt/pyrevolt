@@ -6,8 +6,8 @@ readme: str = (Path(__file__).parent / "README.md").read_text()
 requirements: list = (Path(__file__).parent / "requirements.txt").read_text().splitlines()
 
 packages: dict = [
-    "src.pyrevolt",
-    "src.pyrevolt.structs"
+    "pyrevolt",
+    "pyrevolt.structs"
 ]
 
 setup(
