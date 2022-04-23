@@ -1,7 +1,7 @@
 from __future__ import annotations
 from enum import Enum
 import json
-from ..client import HTTPClient, Request, Method
+from ..client import Method
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..session import Session
@@ -58,7 +58,10 @@ class User:
     def __repr__(self) -> str:
         return f"<pyrevolt.User id={self.userID} username={self.username} badges={self.badges} relationship={self.relationship} online={self.online} bot={self.bot}>"
 
-    async def update(self, updateData: dict) -> None:
+    async def copy(self) -> User:
+        return User(self.userID, self.username, badges=self.badges, online=self.online, relationship=self.relationship, status=self.status, flags=self.flags, bot=self.bot)
+
+    async def update(self, updateData: dict, clear: list[str] = []) -> None:
         self.username = updateData.get("username", self.username)
         self.badges = updateData.get("badges", self.badges)
         self.online = updateData.get("online", self.online)
@@ -68,6 +71,8 @@ class User:
             self.status = await Status.FromJSON(json.dumps(updateData.get("status")))
         self.flags = updateData.get("flags", self.flags)
         self.bot = updateData.get("bot", self.bot)
+        for key in clear:
+            setattr(self, key, None)
 
     @property
     def mention(self) -> str:
@@ -92,14 +97,12 @@ class User:
         return user
         
     @staticmethod
-    async def FromID(userID: str, session) -> User:
+    async def FromID(userID: str, session: Session) -> User:
         if session.users.get(userID) is not None:
             return session.users[userID]
-        client: HTTPClient = HTTPClient()
-        request: Request = Request(Method.GET, "/users/" + userID)
-        request.AddAuthentication(session.token)
-        result: dict = await client.Request(request)
-        await client.Close()
+        result: dict = await session.Request(Method.GET, f"/users/{userID}")
+        if result.get("type") is not None:
+            return
         return await User.FromJSON(json.dumps(result), session)
 
     @staticmethod
