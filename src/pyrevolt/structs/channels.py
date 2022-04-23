@@ -71,7 +71,7 @@ class Channel:
                 if data.get("description") is not None:
                     kwargs["description"] = data["description"]
                 if data.get("default_permissions") is not None:
-                    kwargs["defaultPermissions"] = data["defaultPermissions"]
+                    kwargs["defaultPermissions"] = data["default_permissions"]
                 if data.get("nsfw") is not None:
                     kwargs["nsfw"] = data["nsfw"]
                 if data.get("last_message_id") is not None:
