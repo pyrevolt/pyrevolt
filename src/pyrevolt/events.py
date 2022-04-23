@@ -86,6 +86,10 @@ class ChannelAck(Event):
     VALUE = "ChannelAck"
     LISTENERS: list[callable] = []
 
+class ServerCreate(Event):
+    VALUE = "ServerCreate"
+    LISTENERS: list[callable] = []
+
 class ServerUpdate(Event):
     VALUE = "ServerUpdate"
     LISTENERS: list[callable] = []

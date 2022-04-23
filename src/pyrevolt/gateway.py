@@ -29,6 +29,7 @@ class GatewayEvent(Enum):
     ChannelStartTyping = ChannelStartTyping()
     ChannelStopTyping = ChannelStopTyping()
     ChannelAck = ChannelAck()
+    ServerCreate = ServerCreate()
     ServerUpdate = ServerUpdate()
     ServerDelete = ServerDelete()
     ServerMemberUpdate = ServerMemberUpdate()
