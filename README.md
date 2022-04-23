@@ -4,7 +4,7 @@ A Python library to wrap the Revolt API, made to be easy-to-use but powerful and
 </div>
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-0.2.2--dev-red)](https://img.shields.io/badge/version-0.2.2--dev-red) [![Stability](https://img.shields.io/badge/stability-Use%20if%20experienced-important)](https://img.shields.io/badge/stability-Use%20if%20experienced-important)
+[![Version](https://img.shields.io/badge/version-0.2.3--dev-red)](https://img.shields.io/badge/version-0.2.3--dev-red) [![Stability](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen)](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen) [![Support Server](https://img.shields.io/badge/Support-Revolt%20Server-informational)](https://app.revolt.chat/invite/mNygJpqw)
 </div>
 
 ## Installing pyrevolt
@@ -13,7 +13,7 @@ A Python library to wrap the Revolt API, made to be easy-to-use but powerful and
 To install pyrevolt, you can run the following command:
 ```python
 # Linux/macOS command
-python3 -m pip install py   revolt
+python3 -m pip install pyrevolt
 # Windows
 py -m pip install pyrevolt
 ```
@@ -54,5 +54,5 @@ As the library expands, more examples will be added, but we expect users during 
 [![CodeFactor](https://www.codefactor.io/repository/github/genericnerd/pyrevolt/badge)](https://www.codefactor.io/repository/github/genericnerd/pyrevolt)
 [![CircleCI](https://circleci.com/gh/GenericNerd/pyrevolt.svg?style=shield)](https://app.circleci.com/pipelines/github/GenericNerd/pyrevolt)
 #### Repository Information
-[![License: GPL v3](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/GenericNerd/pyrevolt.svg)](http://isitmaintained.com/project/GenericNerd/pyrevolt "Percentage of issues still open")
