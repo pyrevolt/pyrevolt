@@ -5,6 +5,7 @@ from .gateway import Gateway, GatewayEvent
 from .structs.channels import Channel, Message
 from .structs.user import Relationship, User
 from .structs.server import Server, Role
+from .structs.member import Member
 
 class Session:
     def __init__(self) -> None:
@@ -14,6 +15,7 @@ class Session:
         self.users: dict[str, User] = {}
         self.channels: dict[str, Channel] = {}
         self.servers: dict[str, Server] = {}
+        self.members: dict[str, Member] = {}
         self.messages: dict[str, Message] = {}
 
     async def Connect(self) -> None:
@@ -62,21 +64,23 @@ class Session:
                     await self.ProcessGateway(event)
                 return
             case GatewayEvent.Ready.value:
+                await GatewayEvent.ReadySimplified.value.dispatch()
                 for index, user in enumerate(data["users"]):
                     user: User = await User.FromJSON(json.dumps(user), self)
                     data["users"][index] = user
-                    self.users[user.userID] = user
                 for index, channel in enumerate(data["channels"]):
                     channel: Channel = await Channel.FromJSON(json.dumps(channel), self)
                     data["channels"][index] = channel
-                    self.channels[channel.channelID] = channel
                 for index, server in enumerate(data["servers"]):
                     server: Server = await Server.FromJSON(json.dumps(server), self)
                     data["servers"][index] = server
-                    self.servers[server.serverID] = server
+                for index, member in enumerate(data["members"]):
+                    member: Member = await Member.FromJSON(json.dumps(member), self)
+                    data["members"][index] = member
                 args.append(data["users"])
                 args.append(data["channels"])
                 args.append(data["servers"])
+                args.append(data["members"])
             case GatewayEvent.OnMessage.value:
                 message: dict = data.copy()
                 message.pop("type")
@@ -147,16 +151,20 @@ class Session:
                 self.servers.pop(data["id"])
                 args.append(server)
             case GatewayEvent.ServerMemberUpdate.value:
-                pass
+                member: Member = await Member.FromID(data["id"]["server"] + "." + data["id"]["user"], self)
+                args.append(member)
+                newMember: Member = member.copy()
+                await newMember.update(data["data"], data.get("clear", []))
+                args.append(newMember)
             case GatewayEvent.ServerMemberJoin.value | GatewayEvent.ServerMemberLeave.value:
-                server: Server = self.servers.get(data["id"], await Server.FromID(data["id"], self))
-                user: User = self.users.get(data["user"], await User.FromID(data["user"], self))
+                member: Member = await Member.FromID(data["id"] + "." + data["user"], self)
                 if data["type"] == GatewayEvent.ServerMemberJoin.value:
-                    server.users.append(user)
+                    self.members[member.memberID] = member
+                    if self.users.get(member.user.userID) is None:
+                        self.users[member.user.userID] = member.user
                 else:
-                    server.users.remove(user)
-                args.append(server)
-                args.append(user)
+                    self.members.pop(member.memberID)
+                args.append(member)
             case GatewayEvent.ServerRoleUpdate.value:
                 server: Server = self.servers.get(data["id"], await Server.FromID(data["id"], self))
                 if server.roles.get(data["role_id"]) is None:
@@ -191,6 +199,14 @@ class Session:
     async def GatewayReceive(self) -> dict:
         return await self.ProcessGateway(await self.gateway.Receive())
 
+    async def GetUser(self, userID: str) -> User:
+        if self.users.get(userID) is None:
+            data: dict = await self.Request(Method.GET, f"/users/{userID}")
+            user: User = await User.FromJSON(json.dumps(data), self)
+            return user
+        else:
+            return self.users[userID]
+
     async def GetChannel(self, channelID: str) -> Channel:
         if self.channels.get(channelID) is None:
             data: dict = await self.Request(Method.GET, f"/channels/{channelID}")
@@ -198,3 +214,22 @@ class Session:
             return channel
         else:
             return self.channels[channelID]
+
+    async def GetServer(self, serverID: str) -> Server:
+        if self.servers.get(serverID) is None:
+            data: dict = await self.Request(Method.GET, f"/servers/{serverID}")
+            server: Server = await Server.FromJSON(json.dumps(data), self)
+            return server
+        else:
+            return self.servers[serverID]
+
+    async def GetMember(self, serverID: str, userID: str) -> Member:
+        if self.members.get(serverID + "." + userID) is None:
+            data: dict = await self.Request(Method.GET, f"/servers/{serverID}/members/{userID}")
+            member: Member = await Member.FromJSON(json.dumps(data), self)
+            return member
+        return self.members[serverID + "." + userID]
+
+    async def GetRole(self, serverID: str, roleID: str) -> Role:
+        server: Server = await self.GetServer(serverID)
+        return server.roles.get(roleID)
