@@ -18,6 +18,7 @@ class GatewayEvent(Enum):
     Bulk = Bulk()
     Pong = Pong()
     Ready = Ready()
+    ReadySimplified = ReadySimplified()
     OnMessage = OnMessage()
     MessageUpdate = MessageUpdate()
     MessageDelete = MessageDelete()

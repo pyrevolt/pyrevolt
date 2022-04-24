@@ -42,6 +42,10 @@ class Ready(Event):
     VALUE = "Ready"
     LISTENERS: list[callable] = []
 
+class ReadySimplified(Event):
+    VALUE = "ReadySimplified"
+    LISTENERS: list[callable] = []
+
 class OnMessage(Event):
     VALUE = "Message"
     LISTENERS: list[callable] = []
