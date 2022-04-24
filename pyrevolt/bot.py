@@ -2,11 +2,13 @@ from __future__ import annotations
 import asyncio
 import json
 from typing import Any
+from .structs.member import Member
 from .exceptions import InvalidSession
 from .gateway import GatewayEvent
 from .session import Session
 from .structs.channels import Channel, Message
 from .structs.user import User
+from .structs.server import Server, Role
 
 class Bot:
     class Commands:
@@ -97,5 +99,18 @@ class Bot:
             return func
         return decorator
 
+    async def GetUser(self, userID: str) -> User:
+        return await self.session.GetUser(userID)
+
     async def GetChannel(self, channelID: str) -> Channel:
         return await self.session.GetChannel(channelID)
+    
+    async def GetServer(self, serverID: str) -> Server:
+        return await self.session.GetServer(serverID)
+
+    async def GetMember(self, memberID: str) -> Member:
+        ids: str = memberID.split(".")
+        return await self.session.GetMember(ids[0], ids[1]) 
+
+    async def GetRole(self, serverID: str, roleID: str) -> Role:
+        return await self.session.GetRole(serverID, roleID)
