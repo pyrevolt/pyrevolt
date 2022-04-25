@@ -88,6 +88,7 @@ class Server:
         self.name: str = name
         self.channels: list[ServerChannel] = channels
         self.defaultPermissions = defaultPermissions
+        self.description: str|None = kwargs.get("description")
         self.categories: Category|None = kwargs.get("categories")
         self.systemMessages: SystemMessages|None = kwargs.get("systemMessages")
         self.roles: dict[str, Role]|None = kwargs.get("roles")
@@ -97,7 +98,7 @@ class Server:
         self.discoverable: bool|None = kwargs.get("discoverable")
 
     def __repr__(self) -> str:
-        return f"<pyrevolt.Server id={self.serverID} owner={self.owner} name={self.name} channels={self.channels} defaultPermissions={self.defaultPermissions} categories={self.categories} systemMessages={self.systemMessages} roles={self.roles} nsfw={self.nsfw} flags={self.flags} analytics={self.analytics} discoverable={self.discoverable}>"
+        return f"<pyrevolt.Server id={self.serverID} owner={self.owner} name={self.name} channels={self.channels} defaultPermissions={self.defaultPermissions}>"
     
     def copy(self) -> Server:
         return Server(self.serverID, self.owner, self.name, self.channels, self.defaultPermissions, categories=self.categories, systemMessages=self.systemMessages, roles=self.roles, nsfw=self.nsfw, flags=self.flags, analytics=self.analytics, discoverable=self.discoverable)
@@ -107,6 +108,8 @@ class Server:
             self.owner = await User.FromID(updatedData["owner"], kwargs["session"])
         if updatedData.get("name") is not None:
             self.name = updatedData["name"]
+        if updatedData.get("description") is not None:
+            self.description = updatedData["description"]
         if updatedData.get("channels") is not None:
             self.channels = []
             for channel in updatedData["channels"]:
@@ -149,6 +152,8 @@ class Server:
         for channel in data["channels"]:
             channels.append(await ServerChannel.FromID(channel, session))
 
+        if data.get("description") is not None:
+            kwargs["description"] = data["description"]
         if data.get("categories") is not None:
             categories: list[Category] = []
             for category in data["categories"]:
