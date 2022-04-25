@@ -13,11 +13,13 @@ You can get pyrevolt directly from PyPI:
 If you are on Linux, you can install pyrevolt with:
 
 .. code-block:: console
+
     $ python3 -m pip install -U pyrevolt
 
 If you are on Windows, you can install pyrevolt with:
 
 .. code-block:: console
+
     $ py -m pip install -U pyrevolt
 
 Quick Start
@@ -27,6 +29,7 @@ In this section, we will make a bot that will respond to a specific command.
 The code can look similar to this:
 
 .. code-block:: python
+
     import pyrevolt
 
     bot: pyrevolt.Bot = pyrevolt.Bot(prefix="!")
@@ -39,7 +42,7 @@ The code can look similar to this:
 
 We will now break the code down line by line:
 
-1. The first line import pyrevolt. If this raises a ``ModuleNotFoundError``, you
+1. The first line import pyrevolt. If this raises a ``ModuleNotFoundError``, you 
    probably don't have the latest version of pyrevolt installed.
 2. The second line creates a new instance of the ``Bot`` class. This is our
    connection to pyrevolt. The ``prefix`` argument is the command prefix.
@@ -57,9 +60,11 @@ The bot can then be executed through the command line.
 On Linux:
 
 .. code-block:: console
+
     $ python3 exampleBot.py
 
 On Windows:
 
 .. code-block:: console
+    
     $ py exampleBot.py
