@@ -3,18 +3,23 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to pyrevolt's documentation!
-====================================
+Welcome to pyrevolt
+===================
+
+**pyrevolt** (\pie·ruh·vowlt\) is a Python library to wrap the Revolt
+API, made to be *easy-to-use* but *powerful* and feature rich.
+
+.. note::
+
+   pyrevolt is in alpha/development stages. Exceptions may occur and bugs are likely.
+   You should report them as soon as you find them to the `pyrevolt issue tracker <https://github.com/pyrevolt/pyrevolt/issues>`_.
+
+Getting started
+===============
+
+To get started with pyrevolt, you can check out our :ref:`installation`
+and :docs:`quickstart` guides. You can also check out the :docs:`api`
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   quickstart
+   api
