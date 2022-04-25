@@ -152,6 +152,9 @@ class Group(Channel):
     def __repr__(self) -> str:
         return f"<pyrevolt.Group id={self.channelID} name={self.name} recipients={self.recipients} owner={self.owner}>"
 
+    def __str__(self) -> str:
+        return self.name
+
 class ServerChannel(Channel):
     def __init__(self, channelID: str, type: ChannelType, server, name: str, **kwargs) -> None:
         self.server = server
@@ -162,6 +165,9 @@ class ServerChannel(Channel):
         # TODO: Role permissions
         self.nsfw: bool | None = kwargs.get("nsfw")
         super().__init__(channelID, type, **kwargs)
+
+    def __str__(self) -> str:
+        return self.name
 
 class TextChannel(ServerChannel):
     def __init__(self, channelID: str, server, name: str, **kwargs) -> None:

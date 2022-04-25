@@ -58,6 +58,9 @@ class User:
     def __repr__(self) -> str:
         return f"<pyrevolt.User id={self.userID} username={self.username} badges={self.badges} relationship={self.relationship} online={self.online} bot={self.bot}>"
 
+    def __str__(self) -> str:
+        return self.username
+
     def copy(self) -> User:
         return User(self.userID, self.username, badges=self.badges, online=self.online, relationship=self.relationship, status=self.status, flags=self.flags, bot=self.bot)
 

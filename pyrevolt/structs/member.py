@@ -17,6 +17,9 @@ class Member:
     def __repr__(self) -> str:
         return f"<pyrevolt.Member id={self.memberID} user={self.user} server={self.server} nickname={self.nickname} roles={self.roles}>"
 
+    def __str__(self) -> str:
+        return self.user.username
+
     @property
     def memberID(self) -> str:
         return self.server.serverID + "." + self.user.userID
