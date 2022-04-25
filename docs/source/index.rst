@@ -18,8 +18,11 @@ Getting started
 ===============
 
 To get started with pyrevolt, you can check out our :ref:`installation`
-and :docs:`quickstart` guides. You can also check out the :docs:`api`
+and :docs:`quickstart` guides. These guides will walk through the very
+first steps of using pyrevolt.
 
+Contents
+========
 .. toctree::
    quickstart
    api
