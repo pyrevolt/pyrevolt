@@ -70,7 +70,7 @@ class Role:
             setattr(self, key, None)
 
     @staticmethod
-    async def FromJSON(jsonData: str|bytes, session: Session) -> Role:
+    async def FromJSON(jsonData: str|bytes) -> Role:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
         if data.get("colour") is not None:
@@ -129,7 +129,7 @@ class Server:
         if updatedData.get("roles") is not None:
             self.roles = {}
             for role in updatedData["roles"]:
-                role: Role|None = await Role.FromJSON(json.dumps(role), kwargs["session"])
+                role: Role|None = await Role.FromJSON(json.dumps(role))
                 if role is not None:
                     self.roles[role.roleID] = role
         if updatedData.get("nsfw") is not None:
@@ -165,7 +165,7 @@ class Server:
             roles: dict[str, Role] = {}
             for roleID, role in data["roles"].items():
                 role["_id"] = roleID
-                roles[roleID] = await Role.FromJSON(json.dumps(role), session)
+                roles[roleID] = await Role.FromJSON(json.dumps(role))
             kwargs["roles"] = roles
         if data.get("nsfw") is not None:
             kwargs["nsfw"] = data["nsfw"]

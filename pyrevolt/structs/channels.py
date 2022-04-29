@@ -6,6 +6,7 @@ from .user import User
 from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from ..session import Session
+    from .server import Server
 
 class ChannelType(Enum):
     SavedMessages = "SavedMessages"
@@ -20,8 +21,8 @@ class Channel:
         self.type: ChannelType = type
         self.session: Session|None = kwargs.get("session")
 
-    async def update(self, data: dict, clear: list[str] = []) -> None:
-        for key, value in data.items():
+    async def update(self, updateData: dict, clear: list[str] = []) -> None:
+        for key, value in updateData.items():
             setattr(self, key, value)
         for key in clear:
             setattr(self, key, None)
@@ -115,11 +116,11 @@ class SavedMessages(Channel):
         self.user: User = user
         super().__init__(channelID, ChannelType.SavedMessages, **kwargs)
 
-    def copy(self) -> SavedMessages:
-        return SavedMessages(self.channelID, self.user, session=self.session)
-
     def __repr__(self) -> str:
         return f"<pyrevolt.SavedMessage id={self.channelID} user={self.user}>"
+
+    def copy(self) -> SavedMessages:
+        return SavedMessages(self.channelID, self.user, session=self.session)
 
 class DirectMessage(Channel):
     def __init__(self, channelID: str, active: bool, recipients: list[User], **kwargs) -> None:
@@ -128,11 +129,11 @@ class DirectMessage(Channel):
         self.lastMessageID: str|None = kwargs.get("lastMessageID")
         super().__init__(channelID, ChannelType.DirectMessage, **kwargs)
 
-    def copy(self) -> DirectMessage:
-        return DirectMessage(self.channelID, self.active, self.recipients, session=self.session)
-
     def __repr__(self) -> str:
         return f"<pyrevolt.DirectMessage id={self.channelID} active={self.active} recipients={self.recipients}>"
+
+    def copy(self) -> DirectMessage:
+        return DirectMessage(self.channelID, self.active, self.recipients, session=self.session)
 
 class Group(Channel):
     def __init__(self, channelID: str, name: str, recipients: list[User], owner: User, **kwargs) -> None:
@@ -146,18 +147,18 @@ class Group(Channel):
         self.nsfw: bool|None = kwargs.get("nsfw")
         super().__init__(channelID, ChannelType.Group, **kwargs)
 
-    def copy(self) -> Group:
-        return Group(self.channelID, self.name, self.recipients, self.owner, session=self.session)
-
     def __repr__(self) -> str:
         return f"<pyrevolt.Group id={self.channelID} name={self.name} recipients={self.recipients} owner={self.owner}>"
 
     def __str__(self) -> str:
         return self.name
 
+    def copy(self) -> Group:
+        return Group(self.channelID, self.name, self.recipients, self.owner, session=self.session)
+
 class ServerChannel(Channel):
-    def __init__(self, channelID: str, type: ChannelType, server, name: str, **kwargs) -> None:
-        self.server = server
+    def __init__(self, channelID: str, type: ChannelType, server: Server, name: str, **kwargs) -> None:
+        self.server: Server = server
         self.name: str = name
         self.description: str | None = kwargs.get("description")
         # TODO: Icon
@@ -170,25 +171,25 @@ class ServerChannel(Channel):
         return self.name
 
 class TextChannel(ServerChannel):
-    def __init__(self, channelID: str, server, name: str, **kwargs) -> None:
+    def __init__(self, channelID: str, server: Server, name: str, **kwargs) -> None:
         self.lastMessageID: str|None = kwargs.get("lastMessageID")
         super().__init__(channelID, ChannelType.TextChannel, server, name, **kwargs)
+
+    def __repr__(self) -> str:
+        return f"<pyrevolt.TextChannel id={self.channelID} server={self.server.serverID} name={self.name}>"
 
     def copy(self) -> TextChannel:
         return TextChannel(self.channelID, self.server, self.name, session=self.session)
 
-    def __repr__(self) -> str:
-        return f"<pyrevolt.TextChannel id={self.channelID} server={self.server} name={self.name}>"
-
 class VoiceChannel(ServerChannel):
-    def __init__(self, channelID: str, server, name: str, **kwargs) -> None:
+    def __init__(self, channelID: str, server: Server, name: str, **kwargs) -> None:
         super().__init__(channelID, ChannelType.VoiceChannel, server, name, **kwargs)
 
     def copy(self) -> VoiceChannel:
         return VoiceChannel(self.channelID, self.server, self.name, session=self.session)
 
     def __repr__(self) -> str:
-        return f"<pyrevolt.VoiceChannel id={self.channelID} server={self.server} name={self.name}>"
+        return f"<pyrevolt.VoiceChannel id={self.channelID} server={self.server.serverID} name={self.name}>"
 
 class EmbedType(Enum):
     Website = "Website"
@@ -273,7 +274,6 @@ class Masquerade:
         data: dict = json.loads(jsonData)
         return Masquerade(name=data["name"], avatar=data["avatar"])
 
-
 class Reply:
     def __init__(self, messageID: str, mention: bool):
         self.messageID: str = messageID
@@ -285,15 +285,16 @@ class Reply:
         return Reply(data["id"], data["mention"])
 
 class Message:
-    def __init__(self, messageID: str, channel: Channel, author: User, content, **kwargs):
+    def __init__(self, messageID: str, channel: Channel, author: User, content: str, **kwargs):
         self.messageID: int = messageID
         self.channel: Channel = channel
         self.author: User = author
-        self.content = content
+        self.content: str = content
         self.nonce: str | None = kwargs.get("nonce")
         self.edited: str | None = kwargs.get("edited")
         self.embeds: list[Embed] | None = kwargs.get("embeds")
         self.mentions: list[User] | None = kwargs.get("mentions")
+        # TODO: Fix replies
         self.replies: list[Message] | None = kwargs.get("replies")
         self.masquerade: Masquerade | None = kwargs.get("masquerade")
         self.session: Session = kwargs.get("session")
