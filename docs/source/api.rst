@@ -8,8 +8,9 @@ Client
 
 Method
 ------
-.. autoclass:: Method
-    :show-inheritance:
+.. class:: Method
+    
+    Bases: :class:`enum.Enum`
 
     Values:
         - GET
@@ -85,8 +86,9 @@ Gateway
 
 GatewayEvent
 ------------
-.. autoclass:: GatewayEvent
-    :show-inheritance:
+.. class:: GatewayEvent
+    
+    Bases: :class:`enum.Enum`
 
     Values:
         - Authenticate
@@ -235,8 +237,9 @@ User
 
 Relationship
 ^^^^^^^^^^^^
-.. autoclass:: Relationship
-    :show-inheritance:
+.. class:: Relationship
+    
+    Bases: :class:`enum.Enum`
 
     Values:
         - Blocked
@@ -249,8 +252,9 @@ Relationship
 
 Presence
 ^^^^^^^^
-.. autoclass:: Presence
-    :show-inheritance:
+.. class:: Presence
+    
+    Bases: :class:`enum.Enum`
 
     Values:
         - Busy
@@ -424,8 +428,9 @@ Channels
 
 ChannelType
 ^^^^^^^^^^^
-.. autoclass:: ChannelType
-    :show-inheritance:
+.. class:: ChannelType
+    
+    Bases: :class:`enum.Enum`
 
     Values:
         - SavedMessages
@@ -753,8 +758,9 @@ Messages
 
 EmbedType
 ^^^^^^^^^
-.. autoclass:: EmbedType
-    :show-inheritance:
+.. class:: EmbedType
+    
+    Bases: :class:`enum.Enum`
 
     Values:
         - Website
@@ -763,8 +769,9 @@ EmbedType
 
 EmbedImageSize
 ^^^^^^^^^^^^^^
-.. autoclass:: EmbedImageSize
-    :show-inheritance:
+.. class:: EmbedImageSize
+    
+    Bases: :class:`enum.Enum`
 
     Values:
         - Large
