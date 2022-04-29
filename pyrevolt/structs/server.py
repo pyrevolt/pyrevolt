@@ -96,6 +96,7 @@ class Server:
         self.flags: int|None = kwargs.get("flags")
         self.analytics: bool|None = kwargs.get("analytics")
         self.discoverable: bool|None = kwargs.get("discoverable")
+        self.session: Session|None = kwargs.get("session")
 
     def __repr__(self) -> str:
         return f"<pyrevolt.Server id={self.serverID} owner={self.owner} name={self.name} channels={self.channels} defaultPermissions={self.defaultPermissions}>"
@@ -148,6 +149,7 @@ class Server:
     async def FromJSON(jsonData: str|bytes, session: Session) -> Server:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
+        kwargs["session"] = session
         channels: list[ServerChannel] = []
         for channel in data["channels"]:
             channels.append(await ServerChannel.FromID(channel, session))
@@ -188,3 +190,22 @@ class Server:
         if result.get("type") is not None:
             return
         return await Server.FromJSON(json.dumps(result), session)
+
+    async def Edit(self, **kwargs) -> None:
+        data: dict = {}
+        if kwargs.get("name") is not None:
+            data["name"] = kwargs["name"]
+        if kwargs.get("description") is not None:
+            data["description"] = kwargs["description"]
+        if kwargs.get("analytics") is not None:
+            data["analytics"] = kwargs["analytics"]
+        if kwargs.get("remove") is not None:
+            data["remove"] = kwargs["remove"]
+
+        result: dict = await self.session.Request(Method.PATCH, f"/servers/{self.serverID}", data=data)
+        if result.get("type") is None:
+            await self.update(result, data["remove"])
+
+    async def Delete(self) -> None:
+        await self.session.Request(Method.DELETE, f"/servers/{self.serverID}")
+        self.session.servers.pop(self.serverID)
