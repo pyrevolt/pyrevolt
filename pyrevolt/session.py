@@ -26,8 +26,8 @@ class Session:
         await self.gateway.Authenticate(token)
         self.token = token
 
-        request: dict = await self.Request(Method.GET, "users/@me")
-        self.self: User = self.GetUser(request["_id"])
+        request: dict = await self.Request(Method.GET, "/users/@me")
+        self.self: User = await self.GetUser(request["_id"])
 
     async def Close(self) -> None:
         await self.gateway.Close()
