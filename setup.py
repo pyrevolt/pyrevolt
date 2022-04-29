@@ -1,13 +1,13 @@
 from setuptools import setup
 from pathlib import Path
 
-version: str = "0.1.4-a"
+version: str = "0.2.6-a"
 readme: str = (Path(__file__).parent / "README.md").read_text()
 requirements: list = (Path(__file__).parent / "requirements.txt").read_text().splitlines()
 
 packages: dict = [
-    "src.pyrevolt",
-    "src.pyrevolt.structs"
+    "pyrevolt",
+    "pyrevolt.structs"
 ]
 
 setup(
@@ -22,7 +22,7 @@ setup(
     version=version,
     packages=packages,
     data_files=["requirements.txt"],
-    license="GPLv3",
+    license="MIT",
     description="A Python library to wrap the Revolt API, made to be easy-to-use but powerful and feature rich.",
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -31,7 +31,7 @@ setup(
     python_requires=">=3.10",
     classifiers=[
         "Development Status :: 3 - Alpha",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3.10",

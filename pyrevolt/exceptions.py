@@ -13,7 +13,7 @@ class OnboardingNotFinished(WebsocketError):
 class AlreadyAuthenticated(WebsocketError):
     pass
 
-class ClosedSocketException(Exception):
+class ClosedSocketException(WebsocketError):
     pass
 
 class InvalidMessageException(Exception):

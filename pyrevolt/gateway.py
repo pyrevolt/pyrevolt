@@ -18,6 +18,7 @@ class GatewayEvent(Enum):
     Bulk = Bulk()
     Pong = Pong()
     Ready = Ready()
+    ReadySimplified = ReadySimplified()
     OnMessage = OnMessage()
     MessageUpdate = MessageUpdate()
     MessageDelete = MessageDelete()
@@ -29,6 +30,7 @@ class GatewayEvent(Enum):
     ChannelStartTyping = ChannelStartTyping()
     ChannelStopTyping = ChannelStopTyping()
     ChannelAck = ChannelAck()
+    ServerCreate = ServerCreate()
     ServerUpdate = ServerUpdate()
     ServerDelete = ServerDelete()
     ServerMemberUpdate = ServerMemberUpdate()
@@ -54,7 +56,7 @@ class GatewayKeepAlive(Thread):
             func = asyncio.run_coroutine_threadsafe(coro, self.gateway.loop)
             func.result(10)
 
-    def GetPayload(self) -> dict[str]:
+    def GetPayload(self) -> dict[str, str|int]:
         return {
             "type": GatewayEvent.Ping.value.VALUE,
             "data": 0
