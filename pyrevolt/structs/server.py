@@ -6,6 +6,7 @@ from ..structs.user import User
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..session import Session
+    from .member import Member
 
 class Category:
     def __init__(self, categoryID: str, title: str, channels: list[ServerChannel]) -> None:
@@ -209,3 +210,16 @@ class Server:
     async def Delete(self) -> None:
         await self.session.Request(Method.DELETE, f"/servers/{self.serverID}")
         self.session.servers.pop(self.serverID)
+
+    async def Kick(self, member: Member) -> None:
+        if member.server != self:
+            raise ValueError("Member is not in this server")
+        await self.session.Request(Method.DELETE, f"/servers/{self.serverID}/members/{member.userID}")
+
+    async def Ban(self, member: Member) -> None:
+        if member.server != self:
+            raise ValueError("Member is not in this server")
+        await self.session.Request(Method.PUT, f"/servers/{self.serverID}/bans/{member.userID}")
+
+    async def Unban(self, user: User) -> None:
+        await self.session.Request(Method.DELETE, f"/servers/{self.serverID}/bans/{user.userID}")
