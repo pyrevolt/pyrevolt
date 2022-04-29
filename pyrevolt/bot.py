@@ -18,17 +18,7 @@ class Bot:
             self.bot: Bot = bot
             self.prefix: str = kwargs.get("prefix", "")
 
-        def Error(self, **kwargs) -> None:
-            def decorator(func: callable) -> callable:
-                for listener in self.commandListeners:
-                    if kwargs["name"] in self.commandListeners[listener]["triggers"]:
-                        errors = self.commandListeners[listener].get("errors", [])
-                        errors.append(func)
-                        self.commandListeners[listener]["errors"] = errors
-                return func
-            return decorator
-
-        def Command(self, **kwargs) -> None:
+        def Command(self, **kwargs) -> callable:
             def decorator(func: callable) -> callable:
                 func.Error = self.Error(**kwargs)
                 self.commandListeners[func] = {}
@@ -39,7 +29,17 @@ class Bot:
                 return func
             return decorator
 
-        async def DispatchCommand(self, context: Message) -> None:
+        def Error(self, **kwargs) -> callable:
+            def decorator(func: callable) -> callable:
+                for listener in self.commandListeners:
+                    if kwargs["name"] in self.commandListeners[listener]["triggers"]:
+                        errors = self.commandListeners[listener].get("errors", [])
+                        errors.append(func)
+                        self.commandListeners[listener]["errors"] = errors
+                return func
+            return decorator
+
+        async def dispatchCommand(self, context: Message) -> None:
             if not isinstance(context.content, str):
                 return
             if context.content.startswith(self.prefix):
@@ -66,7 +66,7 @@ class Bot:
     def __init__(self, **kwargs) -> None:
         self.commands = self.Commands(self, prefix=kwargs.get("prefix"))
 
-    async def Start(self, *args, **kwargs) -> None:
+    async def Start(self, **kwargs) -> None:
         self.session: Session = Session()
         if kwargs.get("token") is None:
             raise InvalidSession("No token provided")
@@ -76,7 +76,7 @@ class Bot:
             if data["type"] == GatewayEvent.OnMessage.value:
                 data["type"] = None
                 context: Message = await Message.FromJSON(json.dumps(data), self.session)
-                await self.commands.DispatchCommand(context)
+                await self.commands.dispatchCommand(context)
 
     async def __aenter__(self):
         return self
@@ -84,16 +84,16 @@ class Bot:
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.session.Close()
 
-    def Run(self, *args, **kwargs) -> None:
+    def Run(self, **kwargs) -> None:
         async def runner():
             async with self:
-                await self.Start(*args, **kwargs)
+                await self.Start(**kwargs)
         try:
             asyncio.run(runner())
         except KeyboardInterrupt:
             return
 
-    def on(self, event: GatewayEvent) -> None:
+    def on(self, event: GatewayEvent) -> callable:
         def decorator(func: callable):
             event.value.insertListener(func)
             return func
