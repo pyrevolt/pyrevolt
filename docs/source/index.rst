@@ -27,3 +27,19 @@ Contents
 .. toctree::
    quickstart
    api
+
+Missing Content
+===============
+
+The library is currently missing the following features:
+- Icons and their associated management
+- Attachments and their associated management
+- Permissions (obtainable, but not manageable)
+- Invites and their associated management
+- Creating a group
+- Adding or removing a member from a group
+- Voice
+- Creating a server channel
+- Editing a member of a server
+
+These features are planned throughout the development of pyrevolt, but were not deemed necessary at the current state.
