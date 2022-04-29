@@ -111,6 +111,25 @@ class Channel:
     async def Send(self, **kwargs) -> None:
         await Message.Create(self, **kwargs)
 
+    async def Edit(self, **kwargs) -> None:
+        data: dict = {}
+        if kwargs.get("name") is not None:
+            data["name"] = kwargs["name"]
+        if kwargs.get("description") is not None:
+            data["description"] = kwargs["description"]
+        if kwargs.get("nsfw") is not None:
+            data["nsfw"] = kwargs["nsfw"]
+        if kwargs.get("remove") is not None:
+            data["remove"] = kwargs["remove"]
+
+        result: dict = await self.session.Request(Method.PATCH, f"/channels/{self.channelID}", data=data)
+        if result.get("type") is None:
+            await self.update(result, data["remove"])
+
+    async def Close(self) -> None:
+        await self.session.Request(Method.DELETE, f"/channels/{self.channelID}")
+        self.session.channels.pop(self.channelID)
+
 class SavedMessages(Channel):
     def __init__(self, channelID: str, user: User, **kwargs) -> None:
         self.user: User = user
@@ -190,6 +209,7 @@ class VoiceChannel(ServerChannel):
 
     def __repr__(self) -> str:
         return f"<pyrevolt.VoiceChannel id={self.channelID} server={self.server.serverID} name={self.name}>"
+
 
 class EmbedType(Enum):
     Website = "Website"
@@ -297,7 +317,7 @@ class Message:
         # TODO: Fix replies
         self.replies: list[Message] | None = kwargs.get("replies")
         self.masquerade: Masquerade | None = kwargs.get("masquerade")
-        self.session: Session = kwargs.get("session")
+        self.session: Session | None = kwargs.get("session")
 
     def __repr__(self) -> str:
         return f"<pyrevolt.Message id={self.messageID} channel={self.channel} author={self.author}>"
@@ -394,6 +414,33 @@ class Message:
     async def Send(self, **kwargs) -> Message:
         data: dict = await Message.generateMessageData(**kwargs)
         await Message.FromJSON(json.dumps(await self.session.Request(Method.POST, f"/channels/{self.channel.channelID}/messages", data=data)), self.session)
+
+    async def Edit(self, **kwargs) -> None:
+        data: dict = {}
+        if kwargs.get("content") is not None:
+            data["content"] = kwargs["content"]
+        if kwargs.get("embed") is not None:
+            data["embeds"] = [json.loads(kwargs["embed"].toJSON())]
+        if kwargs.get("embeds") is not None:
+            data["embeds"] = data.get("embeds", [])
+            for embed in kwargs["embeds"]:
+                data["embeds"].append(json.loads(embed.toJSON()))
+
+        result: dict = await self.session.Request(Method.PATCH, f"/channels/{self.channel.channelID}/messages/{self.messageID}", data=data)
+        if result.get("type") is None:
+            await self.update(result)
+
+    async def Delete(self) -> None:
+        if self.author is self.sesison.self:
+            await self.session.Request(Method.DELETE, f"/channels/{self.channel.channelID}/messages/{self.messageID}")
+        else:
+            if self.channel.type == ChannelType.SavedMessages | ChannelType.DirectMessage | ChannelType.Group:
+                raise TypeError("You can only delete messages by yourself from non-server channels.")
+            else:
+                request: dict = await self.session.Request(Method.DELETE, f"/channels/{self.channel.channelID}/messages/{self.messageID}")
+                if request.get("type") == "MissingPermission":
+                    raise PermissionError(f"You are missing the {request['permission']} permission.")
+                self.session.messages.pop(self.messageID)
 
     @staticmethod
     async def Create(channel: Channel, **kwargs) -> Message:
