@@ -4,7 +4,7 @@ A Python library to wrap the Revolt API, made to be easy-to-use but powerful and
 </div>
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-0.2.5--dev-red)](https://img.shields.io/badge/version-0.2.5--dev-red) [![Stability](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen)](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen) [![Support Server](https://img.shields.io/badge/Support-Revolt%20Server-informational)](https://app.revolt.chat/invite/mNygJpqw)
+[![Version](https://img.shields.io/badge/version-0.2.6--dev-red)](https://img.shields.io/badge/version-0.2.6--dev-red) [![Stability](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen)](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen) [![Support Server](https://img.shields.io/badge/support-Revolt%20Server-informational)](https://app.revolt.chat/invite/mNygJpqw) [![Documentation Status](https://readthedocs.org/projects/pyrevolt/badge/?version=latest)](https://pyrevolt.readthedocs.io/en/latest/?badge=latest)
 </div>
 
 ## Installing pyrevolt
@@ -47,7 +47,7 @@ async def helloError(message: pyrevolt.Message, error: Exception) -> None:
 bot.Run(token="TOKEN")
 ```
 
-As the library expands, more examples will be added, but we expect users during the very initial development phases to read through the source in order to find how to develop (this will of course change over the development of the library).
+As the library expands, more examples will be added, but we expect users during the very initial development phases to read through the documentation and see how to use the library. If you have any questions, please join the support server and ask for help.
 
 ### Useful Information
 #### Code Quality
