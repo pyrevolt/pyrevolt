@@ -1,7 +1,7 @@
 from setuptools import setup
 from pathlib import Path
 
-version: str = "0.2.6-a"
+version: str = "0.2.7-a"
 readme: str = (Path(__file__).parent / "README.md").read_text()
 requirements: list = (Path(__file__).parent / "requirements.txt").read_text().splitlines()
 
