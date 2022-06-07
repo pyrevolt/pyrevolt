@@ -4,7 +4,7 @@ A Python library to wrap the Revolt API, made to be easy-to-use but powerful and
 </div>
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-0.2.6--a-red)](https://img.shields.io/badge/version-0.2.6--a-red) [![Stability](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen)](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen) [![Support Server](https://img.shields.io/badge/support-Revolt%20Server-informational)](https://app.revolt.chat/invite/mNygJpqw) [![Documentation Status](https://readthedocs.org/projects/pyrevolt/badge/?version=latest)](https://pyrevolt.readthedocs.io/en/latest/?badge=latest)
+[![Version](https://img.shields.io/badge/version-0.2.7--a-red)](https://img.shields.io/badge/version-0.2.7--a-red) [![Stability](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen)](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen) [![Support Server](https://img.shields.io/badge/support-Revolt%20Server-informational)](https://app.revolt.chat/invite/mNygJpqw) [![Documentation Status](https://readthedocs.org/projects/pyrevolt/badge/?version=latest)](https://pyrevolt.readthedocs.io/en/latest/?badge=latest)
 </div>
 
 ## Installing pyrevolt
@@ -35,7 +35,7 @@ async def onMessage(message: pyrevolt.Message) -> None:
 
 @bot.commands.Command(name="ping")
 async def ping(message: pyrevolt.Message) -> None:
-    await message.Send(content=f"Pong {message.author.username}!", embeds=[pyrevolt.Embed.Create(title="Pong!", description=f"{message.author.mention}!", colour="#0000ff")], replies=[pyrevolt.Reply(message.messageID, True)])
+    await message.Send(content=f"Pong {message.author.username}!", embed=pyrevolt.Embed.Create(title="Pong!", description=f"{message.author.mention}!", colour="#0000ff"), replies=[pyrevolt.Reply(message.messageID, True)])
 
 @bot.commands.Command(name="hello", aliases=["hi"])
 async def hello(message: pyrevolt.Message, name: str) -> None:

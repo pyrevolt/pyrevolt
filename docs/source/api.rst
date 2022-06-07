@@ -884,7 +884,7 @@ Reply
 
 Message
 ^^^^^^^
-.. class:: Message(messageID, channel, author, content, **kwargs)
+.. class:: Message(messageID, channel, author, **kwargs)
 
     A message.
 
@@ -897,10 +897,8 @@ Message
     :param author:
     :type author: :class:`User`
         The author of the message.
-    :param content:
-    :type content: :class:`str`
-        The content of the message.
     :param kwargs:
+        - ``content``: *Optional* - The `str` content for the message.
         - ``nonce`` - *Optional* - The nonce (number used once) in `str` form for the message.
         - ``edited`` - *Optional* - The time the message was edited in `datetime` form.
         - ``embeds`` - *Optional* - A `list` of embeds in `Embed` form for the message.

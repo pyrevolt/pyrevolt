@@ -1,6 +1,7 @@
 from __future__ import annotations
 from enum import Enum
 import json
+from ..exceptions import InvalidMessageException
 from ..client import Method
 from .user import User
 from typing import TYPE_CHECKING, Any
@@ -305,11 +306,11 @@ class Reply:
         return Reply(data["id"], data["mention"])
 
 class Message:
-    def __init__(self, messageID: str, channel: Channel, author: User, content: str, **kwargs):
+    def __init__(self, messageID: str, channel: Channel, author: User, **kwargs):
         self.messageID: int = messageID
         self.channel: Channel = channel
         self.author: User = author
-        self.content: str = content
+        self.content: str | None = kwargs.get("content")
         self.nonce: str | None = kwargs.get("nonce")
         self.edited: str | None = kwargs.get("edited")
         self.embeds: list[Embed] | None = kwargs.get("embeds")
@@ -324,17 +325,19 @@ class Message:
 
     def copy(self) -> Message:
         kwargs: dict = {}
+        kwargs["content"] = self.content
         kwargs["nonce"] = self.nonce
         kwargs["edited"] = self.edited
         kwargs["embeds"] = self.embeds
         kwargs["mentions"] = self.mentions
         kwargs["replies"] = self.replies
         kwargs["masquerade"] = self.masquerade
-        return Message(self.messageID, self.channel, self.author, self.content)
+        return Message(self.messageID, self.channel, self.author, **kwargs)
 
     async def update(self, updatedData: dict) -> None:
-        self.content = updatedData.get("content", self.content)
         self.edited = updatedData.get("edited", self.edited)
+        if updatedData.get("content") is not None:
+            self.content = updatedData["content"]
         if updatedData.get("embeds") is not None:
             embeds: list[Embed] = []
             for embed in updatedData["embeds"]:
@@ -362,6 +365,8 @@ class Message:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
         kwargs["session"] = session
+        if data.get("content") is not None:
+            kwargs["content"] = data["content"]
         if data.get("nonce") is not None:
             kwargs["nonce"] = data["nonce"]
         if data.get("edited") is not None:
@@ -380,7 +385,7 @@ class Message:
                 kwargs["replies"].append(await Message.FromID(data["channel"], reply, session))
         if data.get("masquerade") is not None:
             kwargs["masquerade"] = await Masquerade.FromJSON(json.dumps(data["masquerade"]))
-        message: Message = Message(data["_id"], await Channel.FromID(data["channel"], session), await User.FromID(data["author"], session), data["content"], **kwargs)
+        message: Message = Message(data["_id"], await Channel.FromID(data["channel"], session), await User.FromID(data["author"], session), **kwargs)
         session.messages[data["_id"]] = message
         return message
 
@@ -396,7 +401,11 @@ class Message:
     @staticmethod
     async def generateMessageData(**kwargs) -> dict:
         data: dict = {}
-        data["content"] = kwargs.get("content", "​")
+        if kwargs.get("content") is None and kwargs.get("embeds") is None and kwargs.get("embed") is None:
+            raise InvalidMessageException("Message must have content or embed")
+
+        if kwargs.get("content") is not None:
+            data["content"] = kwargs["content"]
         if kwargs.get("replies") is not None:
             data["replies"] = []
             for reply in kwargs["replies"]:
