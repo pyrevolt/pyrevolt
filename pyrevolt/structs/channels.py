@@ -1,7 +1,7 @@
 from __future__ import annotations
 from enum import Enum
 import json
-from ..exceptions import InvalidMessageException
+from ..exceptions import InvalidMessageException, NotFound
 from ..client import Method
 from .user import User
 from typing import TYPE_CHECKING, Any
@@ -94,8 +94,9 @@ class Channel:
     async def FromID(channelID: str, session: Session) -> Channel:
         if session.channels.get(channelID) is not None:
             return session.channels[channelID]
-        result: dict = await session.Request(Method.GET, f"/channels/{channelID}")
-        if result.get("type") is not None:
+        try:
+            result: dict = await session.Request(Method.GET, f"/channels/{channelID}")
+        except NotFound:
             return
         return await Channel.FromJSON(json.dumps(result), session)
 
