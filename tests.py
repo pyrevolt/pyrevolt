@@ -42,6 +42,9 @@ class GatewayTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_gateway_connect(self) -> None:
         await self.gateway.Connect()
+        await self.gateway.Authenticate(os.getenv("token"))
+        await self.gateway.Receive()  # Authenticated
+        await self.gateway.Receive()  # Ready
         await self.gateway.Send({
             "type": pyrevolt.GatewayEvent.Ping.value.VALUE,
             "data": 0
@@ -57,6 +60,9 @@ class GatewayTests(unittest.IsolatedAsyncioTestCase):
             "data": 0
         }
         await self.gateway.Connect()
+        await self.gateway.Authenticate(os.getenv("token"))
+        await self.gateway.Receive() # Authenticated
+        await self.gateway.Receive() # Ready
         await self.gateway.Send({
             "type": pyrevolt.GatewayEvent.Ping.value.VALUE,
             "data": 0
