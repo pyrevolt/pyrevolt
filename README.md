@@ -4,7 +4,7 @@ A Python library to wrap the Revolt API, made to be easy-to-use but powerful and
 </div>
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-0.2.7--a-red)](https://img.shields.io/badge/version-0.2.7--a-red) [![Stability](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen)](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen) [![Support Server](https://img.shields.io/badge/support-Revolt%20Server-informational)](https://app.revolt.chat/invite/mNygJpqw) [![Documentation Status](https://readthedocs.org/projects/pyrevolt/badge/?version=latest)](https://pyrevolt.readthedocs.io/en/latest/?badge=latest)
+[![Version](https://img.shields.io/badge/version-0.2.8--dev-red)](https://img.shields.io/badge/version-0.2.8--dev-red) [![Stability](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen)](https://img.shields.io/badge/stability-Exceptions%20likely-yellowgreen) [![Support Server](https://img.shields.io/badge/support-Revolt%20Server-informational)](https://app.revolt.chat/invite/mNygJpqw) [![Documentation Status](https://readthedocs.org/projects/pyrevolt/badge/?version=production)](https://pyrevolt.readthedocs.io/en/production/?badge=production)
 </div>
 
 ## Installing pyrevolt

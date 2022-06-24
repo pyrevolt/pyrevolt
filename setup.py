@@ -1,7 +1,7 @@
 from setuptools import setup
 from pathlib import Path
 
-version: str = "0.2.7-a"
+version: str = "0.2.8-dev"
 readme: str = (Path(__file__).parent / "README.md").read_text()
 requirements: list = (Path(__file__).parent / "requirements.txt").read_text().splitlines()
 
@@ -30,7 +30,7 @@ setup(
     install_requires=requirements,
     python_requires=">=3.10",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 2 - Pre-Alpha",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Operating System :: OS Independent",
