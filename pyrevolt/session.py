@@ -219,6 +219,14 @@ class Session:
         else:
             return self.channels[channelID]
 
+    async def GetMessage(self, channelID: str, messageID: str) -> Message:
+        if self.messages.get(messageID) is None:
+            data: dict = await self.Request(Method.GET, f"/channels/{channelID}/messages/{messageID}")
+            message: Message = await Message.FromJSON(json.dumps(data), self)
+            return message
+        else:
+            return self.messages[messageID]
+
     async def GetServer(self, serverID: str) -> Server:
         if self.servers.get(serverID) is None:
             data: dict = await self.Request(Method.GET, f"/servers/{serverID}")

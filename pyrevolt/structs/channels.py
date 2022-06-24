@@ -316,7 +316,6 @@ class Message:
         self.edited: str | None = kwargs.get("edited")
         self.embeds: list[Embed] | None = kwargs.get("embeds")
         self.mentions: list[User] | None = kwargs.get("mentions")
-        # TODO: Fix replies
         self.replies: list[Message] | None = kwargs.get("replies")
         self.masquerade: Masquerade | None = kwargs.get("masquerade")
         self.session: Session | None = kwargs.get("session")

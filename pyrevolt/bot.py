@@ -105,6 +105,9 @@ class Bot:
 
     async def GetChannel(self, channelID: str) -> Channel:
         return await self.session.GetChannel(channelID)
+
+    async def GetMessage(self, channelID: str, messageID: str) -> Message:
+        return await self.session.GetMessage(channelID, messageID)
     
     async def GetServer(self, serverID: str) -> Server:
         return await self.session.GetServer(serverID)
