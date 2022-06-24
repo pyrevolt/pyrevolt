@@ -2,6 +2,7 @@ from __future__ import annotations
 import asyncio
 import json
 from typing import Any
+from .structs.invite import Invite
 from .structs.member import Member
 from .exceptions import InvalidSession
 from .gateway import GatewayEvent
@@ -114,3 +115,6 @@ class Bot:
 
     async def GetRole(self, serverID: str, roleID: str) -> Role:
         return await self.session.GetRole(serverID, roleID)
+
+    async def GetInvite(self, inviteID: str) -> Invite:
+        return await self.session.GetInvite(inviteID)

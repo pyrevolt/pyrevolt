@@ -8,3 +8,4 @@ from .structs.user import Relationship, Presence, Status, BotUser, User
 from .structs.channels import ChannelType, Channel, SavedMessages, DirectMessage, Group, TextChannel, VoiceChannel, Message, EmbedType, EmbedImageSize, Embed, Masquerade, Reply
 from .structs.server import Category, SystemMessages, Role, Server
 from .structs.member import Member
+from .structs.invite import Invite, ServerInvite, GroupInvite

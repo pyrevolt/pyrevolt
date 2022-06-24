@@ -6,6 +6,7 @@ from .structs.channels import Channel, Message
 from .structs.user import Relationship, User
 from .structs.server import Server, Role
 from .structs.member import Member
+from .structs.invite import Invite
 
 class Session:
     def __init__(self) -> None:
@@ -236,3 +237,6 @@ class Session:
     async def GetRole(self, serverID: str, roleID: str) -> Role:
         server: Server = await self.GetServer(serverID)
         return server.roles.get(roleID)
+
+    async def GetInvite(self, inviteID: str) -> Invite:
+        return await Invite.FromJSON(json.dumps(await self.Request(Method.GET, f"/invites/{inviteID}")), self)
