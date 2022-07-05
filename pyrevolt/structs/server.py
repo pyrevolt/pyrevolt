@@ -1,12 +1,13 @@
 from __future__ import annotations
 import json
 from ..client import Method
-from ..structs.channels import ServerChannel
+from ..structs.channels import ServerChannel, Channel
 from ..structs.user import User
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..session import Session
     from .member import Member
+    from .channels import ChannelType
 
 class Category:
     def __init__(self, categoryID: str, title: str, channels: list[ServerChannel]) -> None:
@@ -115,7 +116,7 @@ class Server:
         if updatedData.get("channels") is not None:
             self.channels = []
             for channel in updatedData["channels"]:
-                channel: ServerChannel|None = await ServerChannel.FromJSON(json.dumps(channel), kwargs["session"])
+                channel: ServerChannel|None = await kwargs["session"].GetChannel(channel)
                 if channel is not None:
                     self.channels.append(channel)
         if updatedData.get("default_permissions") is not None:
@@ -151,19 +152,9 @@ class Server:
         data: dict = json.loads(jsonData)
         kwargs: dict = {}
         kwargs["session"] = session
-        channels: list[ServerChannel] = []
-        for channel in data["channels"]:
-            channels.append(await ServerChannel.FromID(channel, session))
 
         if data.get("description") is not None:
             kwargs["description"] = data["description"]
-        if data.get("categories") is not None:
-            categories: list[Category] = []
-            for category in data["categories"]:
-                categories.append(await Category.FromJSON(json.dumps(category), session))
-            kwargs["categories"] = categories
-        if data.get("systemMessages") is not None:
-            kwargs["systemMessages"] = await SystemMessages.FromJSON(json.dumps(data["systemMessages"]), session)
         if data.get("roles") is not None:
             roles: dict[str, Role] = {}
             for roleID, role in data["roles"].items():
@@ -179,8 +170,19 @@ class Server:
         if data.get("discoverable") is not None:
             kwargs["discoverable"] = data["discoverable"]
 
-        server: Server = Server(data["_id"], await User.FromID(data["owner"], session), data["name"], channels, data["default_permissions"], **kwargs)
+        server: Server = Server(data["_id"], await User.FromID(data["owner"], session), data["name"], [], data["default_permissions"], **kwargs)
         session.servers[server.serverID] = server
+        channels: list[ServerChannel] = []
+        for channel in data["channels"]:
+            channels.append(await ServerChannel.FromID(channel, session))
+        server.channels = channels
+        if data.get("categories") is not None:
+            categories: list[Category] = []
+            for category in data["categories"]:
+                categories.append(await Category.FromJSON(json.dumps(category), session))
+            server.categories = categories
+        if data.get("systemMessages") is not None:
+            server.systemMessages = await SystemMessages.FromJSON(json.dumps(data["systemMessages"]), session)
         return server
 
     @staticmethod
@@ -191,6 +193,21 @@ class Server:
         if result.get("type") is not None:
             return
         return await Server.FromJSON(json.dumps(result), session)
+
+    async def CreateChannel(self, name: str, **kwargs) -> Channel:
+        data: dict = {"name": name}
+        if kwargs.get("type") is not None:
+            if kwargs["type"] == ChannelType.TextChannel:
+                data["type"] = "Text"
+            elif kwargs["type"] == ChannelType.VoiceChannel:
+                data["type"] = "Voice"
+        if kwargs.get("description") is not None:
+            data["description"] = kwargs["description"]
+        if kwargs.get("nsfw") is not None:
+            data["nsfw"] = kwargs["nsfw"]
+        
+        result: dict = await self.session.Request(Method.POST, f"/servers/{self.serverID}/channels", data=data)
+        return await Channel.FromJSON(json.dumps(result), self.session)
 
     async def Edit(self, **kwargs) -> None:
         data: dict = {}

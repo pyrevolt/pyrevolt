@@ -78,7 +78,7 @@ class Channel:
                     kwargs["nsfw"] = data["nsfw"]
                 if data.get("last_message_id") is not None:
                     kwargs["lastMessageID"] = data["last_message_id"]
-                channel = TextChannel(data["_id"], data["server"], data["name"], **kwargs)
+                channel = TextChannel(data["_id"], await session.GetServer(data["server"]), data["name"], **kwargs)
             case ChannelType.VoiceChannel.value:
                 if data.get("description") is not None:
                     kwargs["description"] = data["description"]
@@ -86,7 +86,7 @@ class Channel:
                     kwargs["defaultPermissions"] = data["defaultPermissions"]
                 if data.get("nsfw") is not None:
                     kwargs["nsfw"] = data["nsfw"]
-                channel = VoiceChannel(data["_id"], data["server"], data["name"], **kwargs)
+                channel = VoiceChannel(data["_id"], await session.GetServer(data["server"]), data["name"], **kwargs)
         session.channels[channel.channelID] = channel
         return channel
 
