@@ -63,3 +63,26 @@ class Member:
         if result.get("type") is not None:
             return
         return await Member.FromJSON(json.dumps(result), session)
+
+    async def Kick(self) -> None:
+        await self.server.Kick(self)
+
+    async def Ban(self) -> None:
+        await self.server.Ban(self)
+
+    async def Unban(self) -> None:
+        await self.server.Unban(self)
+
+    async def Edit(self, **kwargs) -> None:
+        data: dict = {}
+        if kwargs.get("nickname") is not None:
+            data["nickname"] = kwargs["nickname"]
+        if kwargs.get("roles") is not None:
+            data["roles"] = []
+            for role in kwargs["roles"]:
+                data["roles"].append(role.roleID)
+        if kwargs.get("remove") is not None:
+            data["remove"] = kwargs["remove"]
+
+        result: dict = await self.server.session.Request(Method.PATCH, f"/servers/{self.server.serverID}/members/{self.user.userID}", data=data)
+        await self.update(result)

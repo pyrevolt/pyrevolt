@@ -114,7 +114,10 @@ class Bot:
 
     async def GetMember(self, memberID: str) -> Member:
         ids: str = memberID.split(".")
-        return await self.session.GetMember(ids[0], ids[1]) 
+        return await self.session.GetMember(ids[0], ids[1])
+
+    async def GetMemberFromServer(self, serverID: str, userID: str) -> Member|None:
+        return await self.session.GetMember(serverID, userID)
 
     async def GetRole(self, serverID: str, roleID: str) -> Role:
         return await self.session.GetRole(serverID, roleID)
