@@ -106,7 +106,9 @@ class Session:
                 self.messages.pop(data["id"])
                 args.append(message)
             case GatewayEvent.ChannelCreate.value:
-                channel: Channel = await Channel.FromJSON(json.dumps(data), self)
+                channelData: dict = data.copy()
+                channelData.pop("type")
+                channel: Channel = await Channel.FromJSON(json.dumps(channelData), self)
                 self.channels[channel.channelID] = channel
                 args.append(channel)
             case GatewayEvent.ChannelUpdate.value:
