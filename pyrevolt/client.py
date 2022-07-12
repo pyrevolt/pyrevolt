@@ -1,6 +1,7 @@
 from enum import Enum
 import json
 from typing import Any
+import asyncio
 from aiohttp import ClientSession
 from .exceptions import *
 
@@ -29,113 +30,158 @@ class Request:
         else:
             self.headers["x-session-token"] = token
 
+    @property
+    def bucket(self) -> str:
+        return f"{self.method.value}:{self.url}"
+
+class RequestLock:
+    def __init__(self, lock: asyncio.Lock) -> None:
+        self.lock: asyncio.Lock = lock
+        self.unlock: bool = True
+
+    def __enter__(self) -> None:
+        return self
+    
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        if self.unlock:
+            self.lock.release()
+
+    def defer(self) -> None:
+        self.unlock = False
+
+    def release(self) -> None:
+        self.lock.release()
+        self.unlock = True
+
+    def __repr__(self) -> str:
+        return f"<RequestLock {self.lock=} {self.unlock=}>"
+
 class HTTPClient:
     def __init__(self) -> None:
         self.client: ClientSession = ClientSession()
+        self.locks: dict = dict()
 
     async def Close(self) -> None:
         await self.client.close()
 
     async def Request(self, request: Request) -> dict:
         if not self.client.closed:
-            async with self.client.request(
-                method = request.method.value,
-                url = request.url,
-                data = json.dumps(request.data),
-                headers = request.headers,
-                params = request.params
-            ) as result:
-                if result.status == 204:
-                    return
-                results: dict = await result.json()
-                if results.get("type") is not None:
-                    match results["type"]:
-                        case "LabelMe":
-                            raise InternalServerError("A unlabeled server error occured")
-                        case "AlreadyOnboarded":
-                            raise AlreadyOnboarded()
-                        case "UsernameTaken":
-                            raise UsernameTaken("Username is already taken")
-                        case "InvalidUsername":
-                            raise InvalidUsername("Username is invalid")
-                        case "UnknownUser":
-                            raise UnknownUser("User does not exist")
-                        case "AlreadyFriends":
-                            raise AlreadyFriends("User is already your friend")
-                        case "AlreadySentRequest":
-                            raise AlreadySentRequest("You have already sent a friend request to this user")
-                        case "Blocked":
-                            raise Blocked("User is blocked")
-                        case "BlockedByOther":
-                            raise BlockedByOther("You have been blocked by this user")
-                        case "NotFriends":
-                            raise NotFriends("You are not friends with this user")
-                        case "UnknownChannel":
-                            raise UnknownChannel("Channel does not exist")
-                        case "UnknownAttachment":
-                            raise UnknownAttachment("Attachment does not exist")
-                        case "UnknownMessage":
-                            raise UnknownMessage("Message does not exist")
-                        case "CannotEditMessage":
-                            raise CannotEditMessage("You cannot edit this message")
-                        case "CannotJoinCall":
-                            raise CannotJoinCall("You cannot join this call")
-                        case "TooManyAttachments":
-                            raise TooManyAttachments("Too many attachments were sent")
-                        case "TooManyReplies":
-                            raise TooManyReplies("Too many replies were sent")
-                        case "EmptyMessage":
-                            raise EmptyMessage("Message is empty")
-                        case "PayloadTooLarge":
-                            raise PayloadTooLarge("Payload is too large")
-                        case "CannotRemoveYourself":
-                            raise CannotRemoveYourself("You cannot remove yourself")
-                        case "GroupTooLarge":
-                            raise GroupTooLarge(f"The group is too large, only a maximum of {results['max']} are allowed")
-                        case "AlreadyInGroup":
-                            raise AlreadyInGroup("You are already in this group")
-                        case "NotInGroup":
-                            raise NotInGroup("You are not in this group")
-                        case "UnknownServer":
-                            raise UnknownServer("Server does not exist")
-                        case "InvalidRole":
-                            raise InvalidRole("Role is invalid")
-                        case "Banned":
-                            raise Banned("You have been banned from this server")
-                        case "TooManyServers":
-                            raise TooManyServers(f"You have too many servers, only a maximum of {results['max']} are allowed")
-                        case "ReachedMaximumBots":
-                            raise ReachedMaximumBots("You have reached the maximum number of bots")
-                        case "IsBot":
-                            raise IsBot("This user is a bot")
-                        case "BotIsPrivate":
-                            raise BotIsPrivate("This bot is private, and cannot be invited")
-                        case "MissingPermission":
-                            raise MissingPermission(f"You are missing the {results['permission']} permission to perform this action")
-                        case "MissingUserPermission":
-                            raise MissingUserPermission(f"You are missing the {results['permission']} permission to perform this action")
-                        case "NotElevated":
-                            raise NotElevated("You are not elevated")
-                        case "CannotGiveMissingPermissions":
-                            raise CannotGiveMissingPermissions("You cannot give missing permissions")
-                        case "DatabaseError":
-                            raise DatabaseError(f"A database error occured while attempting the operation {results['operation']} with {results['with']}")
-                        case "InvalidOperation":
-                            raise InvalidOperation()
-                        case "InvalidCredentials":
-                            raise InvalidCredentials()
-                        case "InvalidSession":
-                            raise InvalidSession()
-                        case "DuplicateNonce":
-                            raise DuplicateNonce()
-                        case "VosoUnavailable":
-                            raise VosoUnavailable()
-                        case "NotFound":
-                            raise NotFound()
-                        case "NoEffect":
-                            raise NoEffect()
-                        case "FailedValidation":
-                            raise FailedValidation()                            
-                return results
+            requestLock: RequestLock | None = self.locks.get(request.bucket)
+            if requestLock is None:
+                self.locks[request.bucket] = RequestLock(asyncio.Lock())
+                requestLock = self.locks[request.bucket]
+
+            await requestLock.lock.acquire()
+            with requestLock as lock:
+                for tries in range(5):
+                    async with self.client.request(
+                        method = request.method.value,
+                        url = request.url,
+                        data = json.dumps(request.data),
+                        headers = request.headers,
+                        params = request.params
+                    ) as result:
+                        if result.headers.get("x-ratelimit-remaining") == '0' and result.status != 429:
+                            delta: float = float(result.headers["x-ratelimit-reset-after"])/1000
+                            lock.defer()
+                            self.client.loop.call_later(delta, requestLock.release)
+
+                        if result.status == 204:
+                            return
+
+                        results: dict = await result.json()
+                        if result.status == 429:
+                            await asyncio.sleep(float(results["retry_after"])/1000)
+                            continue
+
+                        if results.get("type") is not None:
+                            match results["type"]:
+                                case "LabelMe":
+                                    raise InternalServerError("A unlabeled server error occured")
+                                case "AlreadyOnboarded":
+                                    raise AlreadyOnboarded()
+                                case "UsernameTaken":
+                                    raise UsernameTaken("Username is already taken")
+                                case "InvalidUsername":
+                                    raise InvalidUsername("Username is invalid")
+                                case "UnknownUser":
+                                    raise UnknownUser("User does not exist")
+                                case "AlreadyFriends":
+                                    raise AlreadyFriends("User is already your friend")
+                                case "AlreadySentRequest":
+                                    raise AlreadySentRequest("You have already sent a friend request to this user")
+                                case "Blocked":
+                                    raise Blocked("User is blocked")
+                                case "BlockedByOther":
+                                    raise BlockedByOther("You have been blocked by this user")
+                                case "NotFriends":
+                                    raise NotFriends("You are not friends with this user")
+                                case "UnknownChannel":
+                                    raise UnknownChannel("Channel does not exist")
+                                case "UnknownAttachment":
+                                    raise UnknownAttachment("Attachment does not exist")
+                                case "UnknownMessage":
+                                    raise UnknownMessage("Message does not exist")
+                                case "CannotEditMessage":
+                                    raise CannotEditMessage("You cannot edit this message")
+                                case "CannotJoinCall":
+                                    raise CannotJoinCall("You cannot join this call")
+                                case "TooManyAttachments":
+                                    raise TooManyAttachments("Too many attachments were sent")
+                                case "TooManyReplies":
+                                    raise TooManyReplies("Too many replies were sent")
+                                case "EmptyMessage":
+                                    raise EmptyMessage("Message is empty")
+                                case "PayloadTooLarge":
+                                    raise PayloadTooLarge("Payload is too large")
+                                case "CannotRemoveYourself":
+                                    raise CannotRemoveYourself("You cannot remove yourself")
+                                case "GroupTooLarge":
+                                    raise GroupTooLarge(f"The group is too large, only a maximum of {results['max']} are allowed")
+                                case "AlreadyInGroup":
+                                    raise AlreadyInGroup("You are already in this group")
+                                case "NotInGroup":
+                                    raise NotInGroup("You are not in this group")
+                                case "UnknownServer":
+                                    raise UnknownServer("Server does not exist")
+                                case "InvalidRole":
+                                    raise InvalidRole("Role is invalid")
+                                case "Banned":
+                                    raise Banned("You have been banned from this server")
+                                case "TooManyServers":
+                                    raise TooManyServers(f"You have too many servers, only a maximum of {results['max']} are allowed")
+                                case "ReachedMaximumBots":
+                                    raise ReachedMaximumBots("You have reached the maximum number of bots")
+                                case "IsBot":
+                                    raise IsBot("This user is a bot")
+                                case "BotIsPrivate":
+                                    raise BotIsPrivate("This bot is private, and cannot be invited")
+                                case "MissingPermission":
+                                    raise MissingPermission(f"You are missing the {results['permission']} permission to perform this action")
+                                case "MissingUserPermission":
+                                    raise MissingUserPermission(f"You are missing the {results['permission']} permission to perform this action")
+                                case "NotElevated":
+                                    raise NotElevated("You are not elevated")
+                                case "CannotGiveMissingPermissions":
+                                    raise CannotGiveMissingPermissions("You cannot give missing permissions")
+                                case "DatabaseError":
+                                    raise DatabaseError(f"A database error occured while attempting the operation {results['operation']} with {results['with']}")
+                                case "InvalidOperation":
+                                    raise InvalidOperation()
+                                case "InvalidCredentials":
+                                    raise InvalidCredentials()
+                                case "InvalidSession":
+                                    raise InvalidSession()
+                                case "DuplicateNonce":
+                                    raise DuplicateNonce()
+                                case "VosoUnavailable":
+                                    raise VosoUnavailable()
+                                case "NotFound":
+                                    raise NotFound()
+                                case "NoEffect":
+                                    raise NoEffect()
+                                case "FailedValidation":
+                                    raise FailedValidation()
+                        return results
         else:
             raise ClosedSocketException()
